@@ -8,6 +8,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
   background: #FAF7F2;
   color: #2C2420;
+  width: 100%;
   max-width: 480px;
   margin: 0 auto;
   min-height: 100svh;
