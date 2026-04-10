@@ -864,37 +864,31 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   font-size: 9px;
   color: #5C4A3E;
 }
-
 /* ── 日記一覧（HistoryPage） ── */
 .diary-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
 }
-.diary-card {
-  background: #FFFDF9;
-  border-radius: 6px;
-  border: 1px solid rgba(180,162,140,0.25);
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: box-shadow 0.15s, border-color 0.15s;
-}
-.diary-card:active { box-shadow: 0 2px 8px rgba(107,79,58,0.1); }
-.diary-card.open { border-color: rgba(139,102,80,0.45); }
-.diary-card-header {
+
+/* 日付ヘッダー */
+.diary-day-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid rgba(180,162,140,0.3);
+  margin-bottom: 8px;
+  cursor: pointer;
 }
-.diary-card-date {
+.diary-day-date {
   display: flex;
   align-items: baseline;
   gap: 6px;
 }
 .diary-date-num {
   font-family: Georgia, serif;
-  font-size: 22px;
+  font-size: 20px;
   color: #6B4F3A;
   line-height: 1;
 }
@@ -907,76 +901,46 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   color: rgba(180,162,140,0.55);
   letter-spacing: 1px;
 }
-.diary-card-right {
+.diary-day-badges {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .diary-shift-badge {
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 3px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
-.diary-chevron {
-  font-size: 11px;
-  color: #9C8070;
-  width: 14px;
-  text-align: center;
-  flex-shrink: 0;
-}
-.diary-card-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-}
-.diary-mood {
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.diary-mood-text {
-  font-size: 11px;
-  color: #5C4A3E;
-}
-.diary-exercise {
-  font-size: 11px;
+.diary-mood-badge { font-size: 18px; line-height: 1; }
+.diary-exercise-badge {
+  font-size: 10px;
   color: #7A9080;
   letter-spacing: 0.3px;
 }
-.diary-preview { margin-top: 2px; }
-.diary-preview-text {
-  font-size: 13px;
-  color: #2C2420;
-  line-height: 1.75;
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.diary-preview-more {
-  display: block;
-  margin-top: 3px;
-  font-size: 11px;
-  color: #9C8070;
-  letter-spacing: 0.3px;
-}
-.diary-notes {
-  margin-top: 10px;
-  border-left: 2px solid rgba(180,162,140,0.35);
-  padding-left: 12px;
+
+/* メモカード */
+.diary-note-cards {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
-.diary-note-item {
+.diary-note-card {
+  background: #FFFDF9;
+  border: 1px solid rgba(180,162,140,0.22);
+  border-radius: 5px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.diary-note-card.open {
+  border-color: rgba(139,102,80,0.45);
+}
+.diary-note-card-top {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
 }
 .diary-note-time {
   font-family: Georgia, serif;
@@ -984,30 +948,23 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   color: #9C8070;
   letter-spacing: 1px;
 }
-.diary-note-text {
+.diary-note-chevron {
+  font-size: 9px;
+  color: #9C8070;
+  flex-shrink: 0;
+}
+.diary-note-body {
   font-size: 13px;
   color: #2C2420;
   line-height: 1.8;
   margin: 0;
-  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.diary-goto-btn {
+.diary-note-body.expanded {
   display: block;
-  width: 100%;
-  margin-top: 14px;
-  background: transparent;
-  border: 1px solid rgba(139,102,80,0.4);
-  color: #8B6650;
-  padding: 9px;
-  font-size: 12px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-family: inherit;
-  letter-spacing: 1px;
-  text-align: center;
-  transition: background 0.15s, color 0.15s;
-}
-.diary-goto-btn:hover {
-  background: #8B6650;
-  color: #fff;
+  overflow: visible;
+  white-space: pre-wrap;
 }
