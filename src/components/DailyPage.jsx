@@ -13,6 +13,8 @@ export default function DailyPage({ state, actions }) {
   const [aiError, setAiError] = useState(null)
   const [aiSaved, setAiSaved] = useState(false)
   const [noteInput, setNoteInput] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editText, setEditText] = useState('')
   const noteRef = useRef(null)
 
   const dateObj = new Date(date.replace(/-/g, '/'))
@@ -65,7 +67,28 @@ export default function DailyPage({ state, actions }) {
     const newRec = { ...rec, [date]: { ...rec[date], notes: [...existing, entry] } }
     updateRec(newRec)
     setNoteInput('')
+    setEditingId(null)
     if (noteRef.current) noteRef.current.focus()
+  }
+
+  const startEdit = (n) => {
+    setEditingId(n.id)
+    setEditText(n.text)
+  }
+
+  const saveEdit = (id) => {
+    const text = editText.trim()
+    if (!text) return
+    const newNotes = (r.notes || []).map(n => n.id === id ? { ...n, text } : n)
+    const newRec = { ...rec, [date]: { ...rec[date], notes: newNotes } }
+    updateRec(newRec)
+    setEditingId(null)
+    setEditText('')
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditText('')
   }
 
   const deleteNote = (id) => {
@@ -292,9 +315,34 @@ export default function DailyPage({ state, actions }) {
             <div key={n.id} className="note-entry">
               <div className="note-entry-header">
                 <span className="note-entry-time">{n.time}</span>
-                <button className="note-del-btn" onClick={() => deleteNote(n.id)}>削除</button>
+                <div className="note-entry-actions">
+                  {editingId !== n.id && (
+                    <button className="note-edit-btn" onClick={() => startEdit(n)}>編集</button>
+                  )}
+                  <button className="note-del-btn" onClick={() => deleteNote(n.id)}>削除</button>
+                </div>
               </div>
-              <div className="note-entry-text">{n.text}</div>
+              {editingId === n.id ? (
+                <div className="note-edit-wrap">
+                  <textarea
+                    className="note-area note-edit-area"
+                    rows="3"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveEdit(n.id) }
+                      if (e.key === 'Escape') cancelEdit()
+                    }}
+                    autoFocus
+                  />
+                  <div className="note-edit-btns">
+                    <button className="note-edit-cancel-btn" onClick={cancelEdit}>キャンセル</button>
+                    <button className="note-add-btn" onClick={() => saveEdit(n.id)} disabled={!editText.trim()}>保存</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="note-entry-text">{n.text}</div>
+              )}
             </div>
           ))}
         </div>

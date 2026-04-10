@@ -287,6 +287,11 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   align-items: center;
   margin-bottom: 3px;
 }
+.note-entry-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 .note-entry-time {
   font-family: Georgia, serif;
   font-size: 10px;
@@ -299,6 +304,17 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   line-height: 1.8;
   white-space: pre-wrap;
 }
+.note-edit-btn {
+  background: transparent;
+  border: none;
+  font-size: 10px;
+  color: #8B6650;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.5px;
+  text-decoration: underline;
+  font-family: inherit;
+}
 .note-del-btn {
   background: transparent;
   border: none;
@@ -309,6 +325,32 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   letter-spacing: 0.5px;
   text-decoration: underline;
   font-family: inherit;
+}
+.note-edit-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.note-edit-area {
+  border-bottom: 1.5px solid #8B6650;
+}
+.note-edit-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+.note-edit-cancel-btn {
+  background: transparent;
+  border: 1px solid rgba(180,162,140,0.5);
+  color: #9C8070;
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 1px;
 }
 .note-legacy {
   padding: 8px 0;
