@@ -1,16 +1,26 @@
+import { useState } from 'react'
 import { C, SHIFTS, MOODS, WJ } from '../constants'
+
+const pad = n => String(n).padStart(2, '0')
+const today = new Date()
+const todayS = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`
 
 export default function HistoryPage({ state, actions }) {
   const { rec, sh } = state
   const { setDate, setTab, setMiniYm } = actions
 
-  const dates = Object.keys(rec)
+  const [calYm, setCalYm] = useState({ y: today.getFullYear(), m: today.getMonth() })
+
+  const allDates = Object.keys(rec)
     .filter(d => {
       const r = rec[d]
-      return r && (r.weight || r.fat || r.sleep || r.mood !== undefined || r.note || r.shift || sh[d])
+      return r && (r.weight || r.fat || r.sleep || r.mood !== undefined ||
+                   r.note || r.notes?.length || r.shift || sh[d])
     })
     .sort()
     .reverse()
+
+  const recDateSet = new Set(allDates)
 
   const goToDate = (ds) => {
     const d = new Date(ds.replace(/-/g, '/'))
@@ -19,7 +29,18 @@ export default function HistoryPage({ state, actions }) {
     setTab('daily')
   }
 
-  if (dates.length === 0) {
+  // カレンダー計算
+  const firstDay = new Date(calYm.y, calYm.m, 1)
+  const lastDay  = new Date(calYm.y, calYm.m + 1, 0)
+  const startDow = firstDay.getDay()
+  const calDays  = []
+  for (let i = 0; i < startDow; i++) calDays.push(null)
+  for (let d = 1; d <= lastDay.getDate(); d++) calDays.push(d)
+
+  const prevMonth = () => setCalYm(({ y, m }) => m === 0 ? { y: y-1, m: 11 } : { y, m: m-1 })
+  const nextMonth = () => setCalYm(({ y, m }) => m === 11 ? { y: y+1, m: 0 } : { y, m: m+1 })
+
+  if (allDates.length === 0) {
     return (
       <>
         <div className="page-title">HISTORY</div>
@@ -28,68 +49,109 @@ export default function HistoryPage({ state, actions }) {
     )
   }
 
-  const groups = {}
-  dates.forEach(ds => {
-    const key = ds.slice(0, 7)
-    if (!groups[key]) groups[key] = []
-    groups[key].push(ds)
-  })
-
   return (
     <>
       <div className="page-title">HISTORY</div>
-      {Object.entries(groups).map(([ym, dsList]) => {
-        const [y, mo] = ym.split('-')
-        return (
-          <div key={ym}>
-            <div className="page-title" style={{ marginBottom: 8, marginTop: 4 }}>
-              {y}年 {parseInt(mo)}月
-            </div>
-            {dsList.map(ds => {
-              const r = rec[ds] || {}
-              const shKey = r.shift || sh[ds]
-              const sv = shKey ? SHIFTS[shKey] : null
-              const d = new Date(ds.replace(/-/g, '/'))
-              const dow = WJ[d.getDay()]
-              const moodEmoji = r.mood !== undefined ? MOODS[r.mood]?.split(' ')[0] : null
 
-              return (
-                <div
-                  key={ds}
-                  className="learn-card"
-                  style={{ borderLeftColor: sv ? sv.c : 'rgba(180,162,140,0.4)', cursor: 'pointer', marginBottom: 6 }}
-                  onClick={() => goToDate(ds)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ textAlign: 'center', minWidth: 32, flexShrink: 0 }}>
-                      <div style={{ fontFamily: 'Georgia, serif', fontSize: 20, color: C.leather, lineHeight: 1 }}>{d.getDate()}</div>
-                      <div style={{ fontSize: 9, color: C.inkL }}>{dow}曜</div>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 3 }}>
-                        {sv && <span style={{ fontSize: 10, color: sv.c, background: sv.bg, padding: '1px 5px', borderRadius: 2 }}>{sv.m} {sv.l}</span>}
-                        {moodEmoji && <span style={{ fontSize: 12 }}>{moodEmoji}</span>}
-                        {r.exercise && <span style={{ fontSize: 10, color: C.sage }}>◯ 運動</span>}
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, fontSize: 11, color: C.inkL, flexWrap: 'wrap' }}>
-                        {r.weight && <span>体重 {r.weight}kg</span>}
-                        {r.sleep && <span>睡眠 {r.sleep}h</span>}
-                        {r.fat && <span>体脂肪 {r.fat}%</span>}
-                      </div>
-                      {r.note && (
-                        <div style={{ fontSize: 11, color: C.inkM, marginTop: 2, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                          {r.note}
-                        </div>
-                      )}
-                    </div>
-                    <span style={{ fontSize: 9, color: C.inkL, flexShrink: 0 }}>›</span>
-                  </div>
+      {/* カレンダー */}
+      <div className="hist-cal">
+        <div className="hist-cal-header">
+          <button className="hist-cal-nav" onClick={prevMonth}>‹</button>
+          <span className="hist-cal-title">{calYm.y}年 {calYm.m + 1}月</span>
+          <button className="hist-cal-nav" onClick={nextMonth}>›</button>
+        </div>
+        <div className="hist-cal-grid">
+          {WJ.map(w => <div key={w} className="hist-cal-dow">{w}</div>)}
+          {calDays.map((d, i) => {
+            if (!d) return <div key={`e${i}`} />
+            const ds = `${calYm.y}-${pad(calYm.m+1)}-${pad(d)}`
+            const hasRec = recDateSet.has(ds)
+            const isToday = ds === todayS
+            return (
+              <div
+                key={ds}
+                className={`hist-cal-day${hasRec ? ' has-rec' : ''}${isToday ? ' is-today' : ''}`}
+                onClick={() => hasRec && goToDate(ds)}
+              >
+                <span>{d}</span>
+                {hasRec && <span className="hist-cal-dot" />}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* 記録一覧 */}
+      <div style={{ marginTop: 20 }}>
+        {allDates.map(ds => {
+          const r = rec[ds] || {}
+          const shKey = r.shift || sh[ds]
+          const sv = shKey ? SHIFTS[shKey] : null
+          const d = new Date(ds.replace(/-/g, '/'))
+          const moodLabel = r.mood !== undefined ? MOODS[r.mood] : null
+          const moodEmoji = moodLabel?.split(' ')[0]
+          const moodText  = moodLabel?.split(' ').slice(1).join(' ')
+          const notes = r.notes?.length
+            ? r.notes
+            : r.note ? [{ id: 'legacy', time: null, text: r.note }] : []
+
+          return (
+            <div key={ds} className="hist-entry">
+              {/* 日付ヘッダー */}
+              <div className="hist-entry-header" onClick={() => goToDate(ds)}>
+                <div className="hist-entry-date">
+                  <span className="hist-entry-datenum">{d.getMonth()+1}/{d.getDate()}</span>
+                  <span className="hist-entry-dow">{WJ[d.getDay()]}曜</span>
+                  <span className="hist-entry-year">{d.getFullYear()}</span>
                 </div>
-              )
-            })}
-          </div>
-        )
-      })}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {sv && (
+                    <span className="hist-shift-badge" style={{ color: sv.c, background: sv.bg, border: `1px solid ${sv.c}` }}>
+                      {sv.m} {sv.l}
+                    </span>
+                  )}
+                  <span className="hist-entry-arrow">›</span>
+                </div>
+              </div>
+
+              {/* バイタル */}
+              {(r.weight || r.fat || r.sleep) && (
+                <div className="hist-vitals">
+                  {r.weight && <span>体重 <b>{r.weight}</b>kg</span>}
+                  {r.fat    && <span>体脂肪 <b>{r.fat}</b>%</span>}
+                  {r.sleep  && <span>睡眠 <b>{r.sleep}</b>h</span>}
+                </div>
+              )}
+
+              {/* 気分・運動 */}
+              {(moodEmoji || r.exercise) && (
+                <div className="hist-mood-row">
+                  {moodEmoji && (
+                    <span className="hist-mood">
+                      {moodEmoji} <span style={{ fontSize: 11, color: C.inkM }}>{moodText}</span>
+                    </span>
+                  )}
+                  {r.exercise && (
+                    <span className="hist-exercise">◯ {r.exNote || '運動'}</span>
+                  )}
+                </div>
+              )}
+
+              {/* DAILY NOTE */}
+              {notes.length > 0 && (
+                <div className="hist-notes">
+                  {notes.map((n, i) => (
+                    <div key={n.id || i} className="hist-note-item">
+                      {n.time && <span className="hist-note-time">{n.time}</span>}
+                      <span className="hist-note-text">{n.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </>
   )
 }

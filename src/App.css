@@ -619,3 +619,169 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   font-family: inherit;
   outline: none;
 }
+
+/* ── 履歴カレンダー ── */
+.hist-cal {
+  background: #FFFDF9;
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid rgba(180,162,140,0.25);
+}
+.hist-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.hist-cal-title {
+  font-family: Georgia, serif;
+  font-size: 13px;
+  color: #6B4F3A;
+  letter-spacing: 1px;
+}
+.hist-cal-nav {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #9C8070;
+  cursor: pointer;
+  padding: 0 8px;
+  line-height: 1;
+}
+.hist-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.hist-cal-dow {
+  text-align: center;
+  font-size: 9px;
+  color: #9C8070;
+  letter-spacing: 1px;
+  padding: 4px 0;
+}
+.hist-cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 0 3px;
+  font-size: 12px;
+  color: #9C8070;
+  border-radius: 3px;
+  gap: 2px;
+  min-height: 32px;
+}
+.hist-cal-day.has-rec {
+  color: #2C2420;
+  cursor: pointer;
+  font-weight: 600;
+}
+.hist-cal-day.has-rec:hover { background: rgba(180,162,140,0.15); }
+.hist-cal-day.is-today > span:first-child {
+  background: #8B6650;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+.hist-cal-dot {
+  width: 4px;
+  height: 4px;
+  background: #8B6650;
+  border-radius: 50%;
+  display: block;
+}
+
+/* ── 履歴エントリ ── */
+.hist-entry {
+  border-bottom: 1px solid rgba(180,162,140,0.25);
+  padding: 12px 0;
+}
+.hist-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.hist-entry-header:hover .hist-entry-datenum { color: #8B6650; }
+.hist-entry-date {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.hist-entry-datenum {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  color: #6B4F3A;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.hist-entry-dow {
+  font-size: 11px;
+  color: #9C8070;
+}
+.hist-entry-year {
+  font-size: 10px;
+  color: rgba(180,162,140,0.6);
+  letter-spacing: 1px;
+}
+.hist-entry-arrow {
+  font-size: 14px;
+  color: #9C8070;
+}
+.hist-shift-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+.hist-vitals {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: #5C4A3E;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.hist-vitals b { font-family: Georgia, serif; font-size: 14px; color: #2C2420; }
+.hist-mood-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.hist-mood { font-size: 14px; }
+.hist-exercise { font-size: 11px; color: #7A9080; letter-spacing: 0.5px; }
+.hist-notes {
+  border-left: 2px solid rgba(180,162,140,0.35);
+  padding-left: 10px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hist-note-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.hist-note-time {
+  font-family: Georgia, serif;
+  font-size: 10px;
+  color: #9C8070;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.hist-note-text {
+  font-size: 12px;
+  color: #2C2420;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
