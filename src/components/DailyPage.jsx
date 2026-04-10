@@ -1,12 +1,13 @@
 import { useState, useRef } from 'react'
-import { C, SHIFTS, MOODS, WJ, WE, d2s, save } from '../constants'
+import { C, SHIFTS, MOODS, WJ, WE, d2s, pad, save } from '../constants'
 
 const today = new Date()
 const todayS = d2s(today)
 
 export default function DailyPage({ state, actions }) {
-  const { date, rec, sh, learn } = state
+  const { date, rec, sh, learn, miniYm } = state
   const { setDate, setMiniYm, updateRec, updateLearn } = actions
+  const [calOpen, setCalOpen] = useState(false)
   const [shiftOpen, setShiftOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiResult, setAiResult] = useState(null)
@@ -35,6 +36,11 @@ export default function DailyPage({ state, actions }) {
   const setRecField = (key, value) => {
     const newRec = { ...rec, [date]: { ...rec[date], [key]: value } }
     updateRec(newRec)
+  }
+
+  const goCalMonth = (delta) => {
+    const d = new Date(miniYm.y, miniYm.m + delta, 1)
+    setMiniYm({ y: d.getFullYear(), m: d.getMonth() })
   }
 
   const goDay = (delta) => {
@@ -176,6 +182,65 @@ export default function DailyPage({ state, actions }) {
         <button className="arrow-btn" onClick={() => goDay(1)}>›</button>
       </div>
       <div className="date-str">{date}</div>
+
+      {/* ── インラインカレンダー ── */}
+      <div className="dcal-wrap">
+        <button className="dcal-toggle" onClick={() => setCalOpen(o => !o)}>
+          <span className="dcal-toggle-ym">{miniYm.y}年 {miniYm.m + 1}月</span>
+          <span className="dcal-toggle-arrow">{calOpen ? '▲ 閉じる' : '▼ カレンダー'}</span>
+        </button>
+        {calOpen && (
+          <div className="dcal-body">
+            <div className="dcal-nav">
+              <button className="dcal-nav-btn" onClick={() => goCalMonth(-1)}>‹</button>
+              <span className="dcal-nav-ym">{miniYm.y}年 {miniYm.m + 1}月</span>
+              <button className="dcal-nav-btn" onClick={() => goCalMonth(1)}>›</button>
+            </div>
+            <div className="dcal-grid">
+              {WJ.map((w, i) => (
+                <div key={w} className="dcal-hd"
+                  style={{ color: i === 0 ? '#A06060' : i === 6 ? '#607080' : C.inkL }}>
+                  {w}
+                </div>
+              ))}
+              {Array.from({ length: new Date(miniYm.y, miniYm.m, 1).getDay() }).map((_, i) => (
+                <div key={`e${i}`} />
+              ))}
+              {Array.from({ length: new Date(miniYm.y, miniYm.m + 1, 0).getDate() }).map((_, i) => {
+                const day = i + 1
+                const ds = `${miniYm.y}-${pad(miniYm.m + 1)}-${pad(day)}`
+                const sk = sh[ds] || rec[ds]?.shift
+                const sv = sk ? SHIFTS[sk] : null
+                const isToday = ds === todayS
+                const isSel = ds === date
+                const hasRec = rec[ds] && (
+                  rec[ds].weight || rec[ds].sleep || rec[ds].fat ||
+                  rec[ds].note || rec[ds].notes?.length || rec[ds].mood !== undefined
+                )
+                return (
+                  <button
+                    key={ds}
+                    className={`dcal-cell${isToday ? ' dcal-today' : ''}${isSel ? ' dcal-sel' : ''}`}
+                    style={{ background: sv ? sv.bg : 'transparent' }}
+                    onClick={() => {
+                      setDate(ds)
+                      setNoteInput('')
+                      setEditingId(null)
+                    }}
+                  >
+                    <span className="dcal-day"
+                      style={{ color: sv ? sv.c : isToday ? C.leatherM : C.ink }}>
+                      {day}
+                    </span>
+                    {sv && <span className="dcal-shift" style={{ color: sv.c }}>{sv.m}</span>}
+                    {hasRec && <span className="dcal-dot" />}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div style={{ padding: '10px 16px 30px' }}>
         {/* シフト */}

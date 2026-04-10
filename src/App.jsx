@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import './App.css'
 import { TABS, WE, d2s } from './constants'
-import MiniCalendar from './components/MiniCalendar'
 import DailyPage from './components/DailyPage'
 import ShiftPage from './components/ShiftPage'
 import GoalPage from './components/GoalPage'
@@ -24,7 +23,6 @@ function save(key, value) {
 export default function App() {
   const [tab, setTab] = useState('daily')
   const [date, setDate] = useState(todayS)
-  const [miniCalOpen, setMiniCalOpen] = useState(false)
   const [miniYm, setMiniYm] = useState({ y: today.getFullYear(), m: today.getMonth() })
   const [rec, setRec] = useState(() => lsGet('hbr-rec', {}))
   const [sh, setSh] = useState(() => lsGet('hbr-sh', {}))
@@ -36,8 +34,8 @@ export default function App() {
   const updateGoals = useCallback((v) => { setGoals(v); save('hbr-goals', v) }, [])
   const updateLearn = useCallback((v) => { setLearn(v); save('hbr-learn', v) }, [])
 
-  const state = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn }
-  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn }
+  const state = { tab, date, miniYm, rec, sh, goals, learn }
+  const actions = { setTab, setDate, setMiniYm, updateRec, updateSh, updateGoals, updateLearn }
 
   const pages = { shift: ShiftPage, goal: GoalPage, history: HistoryPage, graph: GraphPage, learning: LearningPage }
   const PageComponent = pages[tab]
@@ -45,7 +43,7 @@ export default function App() {
   const now = new Date()
 
   return (
-    <div className="hbr-app" onClick={() => setMiniCalOpen(false)}>
+    <div className="hbr-app">
       <header id="hdr">
         <div id="hdr-top">
           <div>
@@ -57,7 +55,6 @@ export default function App() {
             <div className="hdr-date-sub">{now.getFullYear()} / {WE[now.getDay()].toUpperCase()}</div>
           </div>
         </div>
-        {tab === 'daily' && <MiniCalendar state={state} actions={actions} />}
         <nav id="nav">
           {TABS.map(t => (
             <button
