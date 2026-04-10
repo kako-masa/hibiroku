@@ -244,6 +244,12 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .ex-btn.active { background: #7A9080; color: #fff; border-color: #7A9080; }
 
 /* ── 日記テキスト ── */
+.note-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
 .note-area {
   width: 100%;
   background: transparent;
@@ -256,6 +262,57 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   line-height: 2;
   resize: none;
   outline: none;
+}
+.note-add-btn {
+  align-self: flex-end;
+  background: #8B6650;
+  color: #fff;
+  border: none;
+  padding: 6px 18px;
+  font-size: 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 1px;
+  transition: opacity 0.15s;
+}
+.note-add-btn:disabled { opacity: 0.35; cursor: default; }
+.note-entry {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(180,162,140,0.2);
+}
+.note-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+.note-entry-time {
+  font-family: Georgia, serif;
+  font-size: 10px;
+  color: #9C8070;
+  letter-spacing: 1px;
+}
+.note-entry-text {
+  font-size: 13px;
+  color: #2C2420;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+.note-del-btn {
+  background: transparent;
+  border: none;
+  font-size: 10px;
+  color: rgba(180,162,140,0.7);
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.5px;
+  text-decoration: underline;
+  font-family: inherit;
+}
+.note-legacy {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(180,162,140,0.2);
 }
 
 /* ── AI関連 ── */

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { C, SHIFTS, MOODS, WJ, WE, d2s, save } from '../constants'
 
 const today = new Date()
@@ -10,7 +10,10 @@ export default function DailyPage({ state, actions }) {
   const [shiftOpen, setShiftOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiResult, setAiResult] = useState(null)
+  const [aiError, setAiError] = useState(null)
   const [aiSaved, setAiSaved] = useState(false)
+  const [noteInput, setNoteInput] = useState('')
+  const noteRef = useRef(null)
 
   const dateObj = new Date(date.replace(/-/g, '/'))
   const isToday = date === todayS
@@ -39,7 +42,9 @@ export default function DailyPage({ state, actions }) {
     setDate(ds)
     setMiniYm({ y: nd.getFullYear(), m: nd.getMonth() })
     setAiResult(null)
+    setAiError(null)
     setAiSaved(false)
+    setNoteInput('')
   }
 
   const selectShift = (key) => {
@@ -50,9 +55,23 @@ export default function DailyPage({ state, actions }) {
     setShiftOpen(false)
   }
 
-  const handleNote = (e) => {
-    const newRec = { ...rec, [date]: { ...rec[date], note: e.target.value } }
-    save('hbr-rec', newRec)
+  const addNote = () => {
+    const text = noteInput.trim()
+    if (!text) return
+    const now = new Date()
+    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    const entry = { id: Date.now().toString(), time, text }
+    const existing = r.notes || []
+    const newRec = { ...rec, [date]: { ...rec[date], notes: [...existing, entry] } }
+    updateRec(newRec)
+    setNoteInput('')
+    if (noteRef.current) noteRef.current.focus()
+  }
+
+  const deleteNote = (id) => {
+    const existing = r.notes || []
+    const newRec = { ...rec, [date]: { ...rec[date], notes: existing.filter(n => n.id !== id) } }
+    updateRec(newRec)
   }
 
   const handleExNote = (e) => {
@@ -63,30 +82,36 @@ export default function DailyPage({ state, actions }) {
   const fetchAI = async () => {
     setAiLoading(true)
     setAiResult(null)
+    setAiError(null)
     const sl = shift?.l || '未設定'
     const moodLabel = r.mood !== undefined ? MOODS[r.mood] : '未'
-    const prompt = `看護師サポートAI。【${date}】シフト:${sl}/体重:${r.weight || '未'}kg/体脂肪:${r.fat || '未'}%/睡眠:${r.sleep || '未'}h/気分:${moodLabel}/運動:${r.exercise ? (r.exNote || 'あり') : 'なし'}/日記:${r.note || 'なし'}\n以下JSONのみ(バックティック不要):{"advice":"アドバイス3点(番号改行)","workResources":[{"title":"名称","url":"https://...","description":"説明1文"}],"otherResources":[{"title":"名称","url":"https://...","description":"説明1文"}]}\nworkは看護・緩和ケア関連1〜2件、otherは健康・生活1〜2件。`
+    const noteText = (r.notes || []).map(n => `[${n.time}] ${n.text}`).join(' / ') || r.note || 'なし'
+    const prompt = `看護師サポートAI。【${date}】シフト:${sl}/体重:${r.weight || '未'}kg/体脂肪:${r.fat || '未'}%/睡眠:${r.sleep || '未'}h/気分:${moodLabel}/運動:${r.exercise ? (r.exNote || 'あり') : 'なし'}/日記:${noteText}\n以下JSONのみ(バックティック不要):{"advice":"アドバイス3点(番号改行)","workResources":[{"title":"名称","url":"https://...","description":"説明1文"}],"otherResources":[{"title":"名称","url":"https://...","description":"説明1文"}]}\nworkは看護・緩和ケア関連1〜2件、otherは健康・生活1〜2件。`
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/ai', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_ANTHROPIC_KEY || '',
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }],
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
       })
       const data = await res.json()
+      if (!res.ok) {
+        const msg = data.error?.message || `APIエラー (${res.status})`
+        setAiError(msg)
+        setAiLoading(false)
+        return
+      }
       const raw = data.content?.map(b => b.text || '').join('') || ''
-      const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
+      // JSONブロックを抽出（前後にテキストがあっても対応）
+      const jsonMatch = raw.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
+        setAiError('レスポンスのJSON解析に失敗しました。もう一度お試しください。')
+        setAiLoading(false)
+        return
+      }
+      const parsed = JSON.parse(jsonMatch[0])
       setAiResult(parsed)
-    } catch {
-      setAiResult({ error: true })
+    } catch (err) {
+      setAiError(err.message || '通信エラーが発生しました。')
     }
     setAiLoading(false)
   }
@@ -235,14 +260,43 @@ export default function DailyPage({ state, actions }) {
         {/* 日記 */}
         <div className="ruled">
           <div className="sec-label">DAILY NOTE</div>
-          <textarea
-            className="note-area"
-            rows="5"
-            placeholder="今日のこと、気になったこと、感じたこと…"
-            defaultValue={r.note || ''}
-            key={date}
-            onBlur={handleNote}
-          />
+          <div className="note-input-wrap">
+            <textarea
+              ref={noteRef}
+              className="note-area"
+              rows="3"
+              placeholder="今日のこと、気になったこと、感じたこと…"
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addNote() }
+              }}
+            />
+            <button
+              className="note-add-btn"
+              onClick={addNote}
+              disabled={!noteInput.trim()}
+            >
+              保存
+            </button>
+          </div>
+          {/* 旧データ（文字列）の後方互換表示 */}
+          {r.note && !(r.notes?.length) && (
+            <div className="note-legacy">
+              <span className="note-entry-time">—</span>
+              <span className="note-entry-text">{r.note}</span>
+            </div>
+          )}
+          {/* タイムライン */}
+          {(r.notes || []).map((n) => (
+            <div key={n.id} className="note-entry">
+              <div className="note-entry-header">
+                <span className="note-entry-time">{n.time}</span>
+                <button className="note-del-btn" onClick={() => deleteNote(n.id)}>削除</button>
+              </div>
+              <div className="note-entry-text">{n.text}</div>
+            </div>
+          ))}
         </div>
 
         {/* AI アドバイス */}
@@ -290,9 +344,9 @@ export default function DailyPage({ state, actions }) {
               {aiSaved && <div className="saved-msg">✓ 学びタブに保存しました</div>}
             </div>
           )}
-          {aiResult?.error && (
+          {aiError && (
             <div className="ai-box" style={{ marginTop: 10 }}>
-              <p style={{ fontSize: 13, color: C.ink }}>取得に失敗しました。もう一度お試しください。</p>
+              <p style={{ fontSize: 13, color: '#c0392b', margin: 0 }}>⚠️ {aiError}</p>
             </div>
           )}
         </div>
