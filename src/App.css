@@ -1,9 +1,9 @@
-/* ── スクロールバー ── */
+﻿/* 笏笏 繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ繝舌・ 笏笏 */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-thumb { background: #C4B5A0; border-radius: 4px; }
 input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 
-/* ── アプリ全体 ── */
+/* 笏笏 繧｢繝励Μ蜈ｨ菴・笏笏 */
 .hbr-app {
   font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
   background: #FAF7F2;
@@ -16,7 +16,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   flex-direction: column;
 }
 
-/* ── ヘッダー ── */
+/* 笏笏 繝倥ャ繝繝ｼ 笏笏 */
 #hdr {
   background: linear-gradient(150deg, #6B4F3A, #8B6650);
   padding: 12px 14px 0;
@@ -58,7 +58,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   text-align: right;
 }
 
-/* ── ナビゲーション ── */
+/* 笏笏 繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ 笏笏 */
 #nav {
   display: flex;
   border-top: 1px solid rgba(237,231,220,0.15);
@@ -84,7 +84,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .nav-icon { font-size: 12px; color: #EDE7DC; }
 .nav-label { font-size: 8px; color: #EDE7DC; letter-spacing: 0.3px; }
 
-/* ── メインエリア ── */
+/* 笏笏 繝｡繧､繝ｳ繧ｨ繝ｪ繧｢ 笏笏 */
 #main {
   flex: 1;
   overflow-y: auto;
@@ -101,7 +101,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 }
 .page { padding: 12px 16px 40px; }
 
-/* ── タイポグラフィ ── */
+/* 笏笏 繧ｿ繧､繝昴げ繝ｩ繝輔ぅ 笏笏 */
 .page-title {
   font-family: Georgia, serif;
   font-size: 10px;
@@ -124,7 +124,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   margin-bottom: 14px;
 }
 
-/* ── 日付バー（日記ページ） ── */
+/* 笏笏 譌･莉倥ヰ繝ｼ・域律險倥・繝ｼ繧ｸ・・笏笏 */
 #date-bar {
   display: flex;
   align-items: center;
@@ -159,7 +159,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   padding: 4px 10px;
 }
 
-/* ── シフト ── */
+/* 笏笏 繧ｷ繝輔ヨ 笏笏 */
 .shift-btn {
   width: 100%;
   display: flex;
@@ -189,7 +189,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   transition: all 0.15s;
 }
 
-/* ── バイタル ── */
+/* 笏笏 繝舌う繧ｿ繝ｫ 笏笏 */
 .vitals-row { display: flex; gap: 14px; padding: 6px 0; }
 .vital-box { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
 .vital-label { font-size: 8px; color: #9C8070; letter-spacing: 1px; text-transform: uppercase; }
@@ -208,7 +208,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 }
 .vital-unit { font-size: 9px; color: #9C8070; }
 
-/* ── 気分・運動 ── */
+/* 笏笏 豌怜・繝ｻ驕句虚 笏笏 */
 .mood-row { display: flex; gap: 4px; margin-bottom: 8px; }
 .mood-btn {
   flex: 1;
@@ -243,7 +243,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 }
 .ex-btn.active { background: #7A9080; color: #fff; border-color: #7A9080; }
 
-/* ── 日記テキスト ── */
+/* 笏笏 譌･險倥ユ繧ｭ繧ｹ繝・笏笏 */
 .note-input-wrap {
   display: flex;
   flex-direction: column;
@@ -357,7 +357,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   border-bottom: 1px solid rgba(180,162,140,0.2);
 }
 
-/* ── AI関連 ── */
+/* 笏笏 AI髢｢騾｣ 笏笏 */
 .ai-btn {
   width: 100%;
   background: transparent;
@@ -405,7 +405,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 }
 .saved-msg { text-align: center; margin-top: 6px; font-size: 11px; color: #7A9080; letter-spacing: 1px; }
 
-/* ── ミニカレンダー ── */
+/* 笏笏 繝溘ル繧ｫ繝ｬ繝ｳ繝繝ｼ 笏笏 */
 #mini-cal-wrap {
   border-bottom: 1px solid rgba(180,162,140,0.25);
   background: #F5F0E8;
@@ -451,7 +451,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .mini-mark { font-size: 9px; }
 .mini-dot { width: 4px; height: 4px; border-radius: 50%; background: #9C8070; margin-top: 1px; }
 
-/* ── 月間カレンダー（シフト・履歴） ── */
+/* 笏笏 譛磯俣繧ｫ繝ｬ繝ｳ繝繝ｼ・医す繝輔ヨ繝ｻ螻･豁ｴ・・笏笏 */
 .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .month-label { font-family: Georgia, serif; font-size: 17px; color: #2C2420; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 10px; }
@@ -492,7 +492,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   font-family: inherit;
 }
 
-/* ── 目標 ── */
+/* 笏笏 逶ｮ讓・笏笏 */
 .date-input {
   width: 100%;
   border: 1px solid rgba(180,162,140,0.3);
@@ -510,7 +510,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .gbar-fill { height: 100%; background: #8B6650; border-radius: 2px; transition: width 0.4s; }
 .gbar-sub { margin-top: 3px; font-size: 10px; color: #9C8070; }
 
-/* ── 学び ── */
+/* 笏笏 蟄ｦ縺ｳ 笏笏 */
 .learn-stats { display: flex; gap: 8px; margin-bottom: 14px; }
 .stat-box {
   flex: 1;
@@ -607,7 +607,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .card-arrow { text-align: center; padding-top: 4px; font-size: 9px; color: rgba(180,162,140,0.4); letter-spacing: 1px; }
 .empty-msg { text-align: center; padding: 30px 0; color: #9C8070; font-size: 13px; white-space: pre-line; }
 
-/* ── 運動メモ入力 ── */
+/* 笏笏 驕句虚繝｡繝｢蜈･蜉・笏笏 */
 .ex-note-input {
   width: 100%;
   background: transparent;
@@ -620,7 +620,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   outline: none;
 }
 
-/* ── 履歴カレンダー ── */
+/* 笏笏 螻･豁ｴ繧ｫ繝ｬ繝ｳ繝繝ｼ 笏笏 */
 .hist-cal {
   background: #FFFDF9;
   border-radius: 6px;
@@ -696,7 +696,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   display: block;
 }
 
-/* ── 履歴エントリ ── */
+/* 笏笏 螻･豁ｴ繧ｨ繝ｳ繝医Μ 笏笏 */
 .hist-entry {
   border-bottom: 1px solid rgba(180,162,140,0.25);
   padding: 12px 0;
@@ -784,4 +784,83 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   color: #2C2420;
   line-height: 1.7;
   white-space: pre-wrap;
+}
+
+/* ── グラフページ ── */
+.graph-range-btns {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.graph-range-btn {
+  flex: 1;
+  padding: 9px;
+  border: 1px solid rgba(180,162,140,0.4);
+  border-radius: 4px;
+  background: transparent;
+  color: #5C4A3E;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+.graph-range-btn.active {
+  background: #8B6650;
+  color: #fff;
+  border-color: #8B6650;
+}
+.graph-summary {
+  display: flex;
+  margin-bottom: 12px;
+  background: #FFFDF9;
+  border-radius: 6px;
+  border: 1px solid rgba(180,162,140,0.2);
+  overflow: hidden;
+}
+.graph-summary-item {
+  flex: 1;
+  padding: 8px 4px;
+  text-align: center;
+  border-right: 1px solid rgba(180,162,140,0.15);
+}
+.graph-summary-item:last-child { border-right: none; }
+.graph-summary-label {
+  font-size: 8px;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+}
+.graph-summary-val {
+  font-family: Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+.graph-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #FFFDF9;
+  border-radius: 6px;
+  border: 1px solid rgba(180,162,140,0.2);
+  padding: 10px 8px;
+  margin-bottom: 10px;
+}
+.graph-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 2px;
+}
+.graph-legend-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.graph-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: #5C4A3E;
 }
