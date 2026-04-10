@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { C, SHIFTS, MOODS, WJ, d2s } from '../constants'
+import { C, SHIFTS, WJ, d2s } from '../constants'
 
 const today = new Date()
 
-const MOOD_COLORS = [C.sage, C.gold, C.inkL, C.mauve, C.rose]
-const MOOD_LABELS = ['よい', 'まあまあ', 'ふつう', 'あまり…', 'つらい']
+const MOOD_EMOJIS = ['😊', '🙂', '😐', '😟', '😢']
 
 // 各系列を 0〜1 に正規化
 function normSeries(vals) {
@@ -65,21 +64,16 @@ export default function GraphPage({ state }) {
   const DAY_W = range === 7 ? 46 : 28
   const SVG_W = DAY_W * N
 
-  const DATE_H  = 32   // 日付・曜日ラベル
+  const DATE_H  = 50   // 日付・曜日・気分絵文字
   const SHIFT_H = 24   // シフトアイコン＋運動ドット
   const LINE_H  = 110  // 折れ線グラフ
-  const DIV     = 8    // セクション間隔
-  const MOOD_H  = 60   // 気分バー
-  const SVG_H   = DATE_H + SHIFT_H + LINE_H + DIV + MOOD_H
+  const SVG_H   = DATE_H + SHIFT_H + LINE_H
 
   const xc = i => i * DAY_W + DAY_W / 2
 
   const LINE_TOP = DATE_H + SHIFT_H + 6
   const LINE_BOT = DATE_H + SHIFT_H + LINE_H - 6
   const yLine = v => LINE_BOT - v * (LINE_BOT - LINE_TOP)
-
-  const MOOD_TOP    = DATE_H + SHIFT_H + LINE_H + DIV
-  const MOOD_BAR_MAX = MOOD_H - 10
 
   // 折れ線を null で分割してセグメント化
   function buildSegments(norm) {
@@ -159,24 +153,18 @@ export default function GraphPage({ state }) {
           {/* セクション境界線 */}
           <line x1={0} y1={DATE_H + SHIFT_H} x2={SVG_W} y2={DATE_H + SHIFT_H}
             stroke="rgba(180,162,140,0.25)" strokeWidth="1" />
-          <line x1={0} y1={MOOD_TOP} x2={SVG_W} y2={MOOD_TOP}
-            stroke="rgba(180,162,140,0.25)" strokeWidth="1" />
 
           {/* 各日列 */}
           {days.map((day, i) => {
-            const cx    = i * DAY_W
-            const isWe  = day.d.getDay() === 0 || day.d.getDay() === 6
-            const bw    = Math.max(DAY_W * 0.48, 6)
-            const moodH = day.mood !== null
-              ? Math.max(((4 - day.mood) / 4) * MOOD_BAR_MAX, 3)
-              : 0
+            const cx   = i * DAY_W
+            const isWe = day.d.getDay() === 0 || day.d.getDay() === 6
 
             return (
               <g key={day.ds}>
                 {/* シフト背景帯（日付行を除く全縦） */}
                 {day.shift && (
                   <rect x={cx} y={DATE_H} width={DAY_W}
-                    height={SHIFT_H + LINE_H + DIV + MOOD_H}
+                    height={SHIFT_H + LINE_H}
                     fill={day.shift.c} opacity="0.09" />
                 )}
 
@@ -198,6 +186,14 @@ export default function GraphPage({ state }) {
                 >
                   {WJ[day.d.getDay()]}
                 </text>
+                {/* 気分絵文字 */}
+                {day.mood !== null && (
+                  <text x={cx + DAY_W / 2} y={43}
+                    textAnchor="middle" fontSize={range === 7 ? 14 : 10}
+                  >
+                    {MOOD_EMOJIS[day.mood]}
+                  </text>
+                )}
 
                 {/* シフトアイコン */}
                 {day.shift && (
@@ -212,16 +208,6 @@ export default function GraphPage({ state }) {
                 {day.exercise && (
                   <circle cx={cx + DAY_W / 2} cy={DATE_H + SHIFT_H - 5}
                     r={range === 7 ? 3.5 : 2.5} fill={C.sage} />
-                )}
-
-                {/* 気分バー */}
-                {day.mood !== null && (
-                  <rect
-                    x={cx + (DAY_W - bw) / 2}
-                    y={MOOD_TOP + (MOOD_BAR_MAX - moodH) + 5}
-                    width={bw} height={moodH}
-                    fill={MOOD_COLORS[day.mood]} opacity="0.75" rx="2"
-                  />
                 )}
               </g>
             )
@@ -270,12 +256,9 @@ export default function GraphPage({ state }) {
             <div style={{ width: 8, height: 8, background: C.sage, borderRadius: '50%' }} />
             <span>運動</span>
           </div>
-        </div>
-        <div className="graph-legend-group">
-          {MOOD_LABELS.map((l, i) => (
+          {MOOD_EMOJIS.map((e, i) => (
             <div key={i} className="graph-legend-item">
-              <div style={{ width: 8, height: 8, background: MOOD_COLORS[i], borderRadius: 2, opacity: 0.8 }} />
-              <span>{l}</span>
+              <span style={{ fontSize: 12 }}>{e}</span>
             </div>
           ))}
         </div>
