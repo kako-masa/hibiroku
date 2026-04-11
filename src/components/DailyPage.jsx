@@ -4,9 +4,16 @@ import { C, SHIFTS, MOODS, WJ, WE, d2s, pad, save } from '../constants'
 const today = new Date()
 const todayS = d2s(today)
 
+// 今日その習慣が完了しているか（DailyPage用）
+function isHabitDoneToday(task, rec) {
+  if (task.linkedTo === 'weight') return !!(rec[todayS]?.weight)
+  if (task.linkedTo === 'exercise') return !!(rec[todayS]?.exercise)
+  return !!(task.dailyDone?.[todayS])
+}
+
 export default function DailyPage({ state, actions }) {
-  const { date, rec, sh, learn, miniYm } = state
-  const { setDate, setMiniYm, updateRec, updateLearn } = actions
+  const { date, rec, sh, learn, miniYm, goals } = state
+  const { setDate, setMiniYm, updateRec, updateLearn, updateGoals } = actions
   const [calOpen, setCalOpen] = useState(false)
   const [shiftOpen, setShiftOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
@@ -16,6 +23,9 @@ export default function DailyPage({ state, actions }) {
   const [noteInput, setNoteInput] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editText, setEditText] = useState('')
+  const [habitOpen, setHabitOpen] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('hbr-habit-open') ?? 'true') } catch { return true }
+  })
   const noteRef = useRef(null)
 
   const dateObj = new Date(date.replace(/-/g, '/'))
@@ -108,6 +118,42 @@ export default function DailyPage({ state, actions }) {
     save('hbr-rec', newRec)
   }
 
+  // ハビットトラッカー：今日のチェックをgoalsに反映
+  const toggleHabitToday = (goalId, taskId) => {
+    const updated = (goals || []).map(g => {
+      if (g.id !== goalId) return g
+      return {
+        ...g,
+        habitTasks: (g.habitTasks || []).map(t => {
+          if (t.id !== taskId) return t
+          const prev = t.dailyDone?.[todayS]
+          return { ...t, dailyDone: { ...(t.dailyDone || {}), [todayS]: !prev } }
+        })
+      }
+    })
+    updateGoals(updated)
+  }
+
+  const toggleHabitOpen = () => {
+    setHabitOpen(v => {
+      const next = !v
+      try { localStorage.setItem('hbr-habit-open', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
+  // 習慣グループ：habitTasksがあるgoalのみ
+  const habitGroups = (goals || [])
+    .filter(g => (g.habitTasks || []).length > 0)
+    .map(g => ({
+      goalId: g.id,
+      goalTitle: g.title,
+      tasks: g.habitTasks || []
+    }))
+
+  const totalHabits = habitGroups.reduce((s, g) => s + g.tasks.length, 0)
+  const doneHabits = habitGroups.reduce((s, g) => s + g.tasks.filter(t => isHabitDoneToday(t, rec)).length, 0)
+
   const fetchAI = async () => {
     setAiLoading(true)
     setAiResult(null)
@@ -130,7 +176,6 @@ export default function DailyPage({ state, actions }) {
         return
       }
       const raw = data.content?.map(b => b.text || '').join('') || ''
-      // JSONブロックを抽出（前後にテキストがあっても対応）
       const jsonMatch = raw.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
         setAiError('レスポンスのJSON解析に失敗しました。もう一度お試しください。')
@@ -250,6 +295,126 @@ export default function DailyPage({ state, actions }) {
       <div className="date-str">{date}</div>
 
       <div style={{ padding: '10px 16px 30px' }}>
+
+        {/* ── 今日のハビットトラッカー ── */}
+        {totalHabits > 0 && (
+          <div style={{
+            background: '#FFFDF9',
+            border: '1px solid rgba(107,79,58,0.2)',
+            borderRadius: 6,
+            marginBottom: 12,
+            overflow: 'hidden'
+          }}>
+            {/* トグルヘッダー */}
+            <button
+              onClick={toggleHabitOpen}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                gap: 8,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: C.leather }}>
+                  今日のハビット
+                </span>
+                {/* ミニ進捗バー */}
+                <div style={{ width: 60, height: 4, background: '#EDE7DC', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${totalHabits > 0 ? Math.round((doneHabits / totalHabits) * 100) : 0}%`,
+                    background: C.leather,
+                    borderRadius: 2,
+                    transition: 'width 0.3s'
+                  }} />
+                </div>
+                <span style={{ fontSize: 10, color: C.inkL }}>{doneHabits}/{totalHabits}</span>
+              </div>
+              <span style={{ fontSize: 9, color: C.inkL }}>{habitOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {habitOpen && (
+              <div style={{ padding: '0 12px 10px' }}>
+                {habitGroups.map((group, gi) => (
+                  <div key={group.goalId} style={{ marginTop: gi === 0 ? 0 : 10 }}>
+                    {/* 目標名（カテゴリ） */}
+                    <div style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      letterSpacing: 1,
+                      color: C.inkL,
+                      textTransform: 'uppercase',
+                      marginBottom: 6,
+                      paddingBottom: 4,
+                      borderBottom: `1px solid rgba(180,162,140,0.2)`
+                    }}>
+                      {group.goalTitle}
+                    </div>
+                    {group.tasks.map(task => {
+                      const done = isHabitDoneToday(task, rec)
+                      const isLinked = !!task.linkedTo
+                      return (
+                        <div
+                          key={task.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 9,
+                            marginBottom: 7,
+                            opacity: done ? 0.6 : 1,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={done}
+                            disabled={isLinked}
+                            onChange={() => !isLinked && toggleHabitToday(group.goalId, task.id)}
+                            style={{
+                              accentColor: C.leather,
+                              width: 17,
+                              height: 17,
+                              flexShrink: 0,
+                              cursor: isLinked ? 'default' : 'pointer'
+                            }}
+                          />
+                          <span style={{
+                            fontSize: 13,
+                            color: done ? C.inkL : C.ink,
+                            textDecoration: done ? 'line-through' : 'none',
+                            flex: 1,
+                            lineHeight: 1.4
+                          }}>
+                            {task.text}
+                          </span>
+                          {isLinked && (
+                            <span style={{
+                              fontSize: 9,
+                              background: '#EDE7DC',
+                              color: C.leather,
+                              borderRadius: 3,
+                              padding: '1px 5px',
+                              flexShrink: 0,
+                              fontWeight: 600
+                            }}>
+                              自動
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* シフト */}
         <div className="ruled">
           <div className="sec-label">SHIFT</div>
@@ -375,14 +540,12 @@ export default function DailyPage({ state, actions }) {
               保存
             </button>
           </div>
-          {/* 旧データ（文字列）の後方互換表示 */}
           {r.note && !(r.notes?.length) && (
             <div className="note-legacy">
               <span className="note-entry-time">—</span>
               <span className="note-entry-text">{r.note}</span>
             </div>
           )}
-          {/* タイムライン */}
           {(r.notes || []).map((n) => (
             <div key={n.id} className="note-entry">
               <div className="note-entry-header">

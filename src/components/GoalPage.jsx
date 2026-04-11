@@ -3,17 +3,15 @@ import { C, d2s } from '../constants'
 
 const todayS = d2s(new Date())
 
-// Get Monday date string for a given date string
 function getMondayStr(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
-  const day = d.getDay() // 0=Sun
+  const day = d.getDay()
   const diff = day === 0 ? -6 : 1 - day
   const mon = new Date(d)
   mon.setDate(d.getDate() + diff)
   return d2s(mon)
 }
 
-// Get all 7 date strings for the week starting at mondayStr
 function getWeekDates(mondayStr) {
   const mon = new Date(mondayStr + 'T00:00:00')
   return Array.from({ length: 7 }, (_, i) => {
@@ -26,14 +24,12 @@ function getWeekDates(mondayStr) {
 const currentMonday = getMondayStr(todayS)
 const currentWeekDates = getWeekDates(currentMonday)
 
+// 週単位で「今週どこかの日にチェック済みか」を返す（GoalPage進捗用）
 function isHabitDone(task, rec) {
-  if (task.linkedTo === 'weight') {
-    return currentWeekDates.some(d => rec[d]?.weight)
-  }
-  if (task.linkedTo === 'exercise') {
-    return currentWeekDates.some(d => rec[d]?.exercise)
-  }
-  return !!(task.weeklyDone?.[currentMonday])
+  if (task.linkedTo === 'weight') return currentWeekDates.some(d => rec[d]?.weight)
+  if (task.linkedTo === 'exercise') return currentWeekDates.some(d => rec[d]?.exercise)
+  // カスタム習慣: 今週のいずれかの日にdailyDoneがあればOK
+  return currentWeekDates.some(d => task.dailyDone?.[d])
 }
 
 function calcProgress(goal, rec) {
@@ -142,9 +138,9 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
   const toggleHabit = (id) => {
     const task = habitTasks.find(h => h.id === id)
     if (!task || task.linkedTo) return
-    const prev = task.weeklyDone?.[currentMonday]
-    const weeklyDone = { ...(task.weeklyDone || {}), [currentMonday]: !prev }
-    update({ habitTasks: habitTasks.map(h => h.id === id ? { ...h, weeklyDone } : h) })
+    const prev = task.dailyDone?.[todayS]
+    const dailyDone = { ...(task.dailyDone || {}), [todayS]: !prev }
+    update({ habitTasks: habitTasks.map(h => h.id === id ? { ...h, dailyDone } : h) })
   }
 
   const deleteHabit = (id) => update({ habitTasks: habitTasks.filter(h => h.id !== id) })
@@ -154,7 +150,7 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
     const text = linkedTo === 'weight' ? '体重を記録する'
       : linkedTo === 'exercise' ? '運動する'
       : newHabit.trim()
-    const task = { id: Date.now(), text, linkedTo: linkedTo || null, weeklyDone: {} }
+    const task = { id: Date.now(), text, linkedTo: linkedTo || null, dailyDone: {} }
     update({ habitTasks: [...habitTasks, task] })
     setNewHabit('')
     setShowAddHabit(false)
@@ -220,27 +216,9 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
         <div className="card-expand">
           {editing ? (
             <div style={{ marginBottom: 12 }}>
-              <input
-                className="date-input"
-                style={{ marginBottom: 6 }}
-                placeholder="目標タイトル"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-              />
-              <input
-                className="date-input"
-                type="date"
-                style={{ marginBottom: 6 }}
-                value={deadline}
-                onChange={e => setDeadline(e.target.value)}
-              />
-              <textarea
-                className="note-area"
-                rows="3"
-                placeholder="メモ・詳細"
-                value={note}
-                onChange={e => setNote(e.target.value)}
-              />
+              <input className="date-input" style={{ marginBottom: 6 }} placeholder="目標タイトル" value={title} onChange={e => setTitle(e.target.value)} />
+              <input className="date-input" type="date" style={{ marginBottom: 6 }} value={deadline} onChange={e => setDeadline(e.target.value)} />
+              <textarea className="note-area" rows="3" placeholder="メモ・詳細" value={note} onChange={e => setNote(e.target.value)} />
               <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                 <button className="memo-save" onClick={saveEdits}>保存</button>
                 <button className="close-btn" onClick={() => setEditing(false)}>キャンセル</button>
@@ -248,37 +226,20 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
             </div>
           ) : (
             <div style={{ marginBottom: 12 }}>
-              {goal.note && (
-                <div style={{ fontSize: 12, color: C.inkM, marginBottom: 4, lineHeight: 1.7 }}>{goal.note}</div>
-              )}
-              {goal.deadline && (
-                <div style={{ fontSize: 11, color: C.inkL, marginBottom: 4 }}>期限: {goal.deadline}</div>
-              )}
-              <button
-                style={{ fontSize: 11, color: C.leather, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-                onClick={() => setEditing(true)}
-              >
-                編集
-              </button>
+              {goal.note && <div style={{ fontSize: 12, color: C.inkM, marginBottom: 4, lineHeight: 1.7 }}>{goal.note}</div>}
+              {goal.deadline && <div style={{ fontSize: 11, color: C.inkL, marginBottom: 4 }}>期限: {goal.deadline}</div>}
+              <button style={{ fontSize: 11, color: C.leather, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }} onClick={() => setEditing(true)}>編集</button>
             </div>
           )}
 
-          {/* 習慣タスク section */}
-          <div style={{
-            background: '#FAF7F2',
-            borderRadius: 5,
-            padding: '10px 10px 8px',
-            marginBottom: 10,
-            border: '1px solid rgba(107,79,58,0.15)'
-          }}>
+          {/* 習慣タスク */}
+          <div style={{ background: '#FAF7F2', borderRadius: 5, padding: '10px 10px 8px', marginBottom: 10, border: '1px solid rgba(107,79,58,0.15)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: C.leather }}>習慣タスク</span>
                 <span style={{ fontSize: 9, color: C.inkL, background: '#EDE7DC', borderRadius: 3, padding: '1px 5px' }}>毎週リセット</span>
               </div>
-              {habitTasks.length > 0 && (
-                <span style={{ fontSize: 10, color: C.inkL }}>{habitDone}/{habitTasks.length}</span>
-              )}
+              {habitTasks.length > 0 && <span style={{ fontSize: 10, color: C.inkL }}>{habitDone}/{habitTasks.length}</span>}
             </div>
 
             {habitTasks.length === 0 && !showAddHabit && (
@@ -286,13 +247,7 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
             )}
 
             {habitTasks.map(task => (
-              <HabitTaskItem
-                key={task.id}
-                task={task}
-                rec={rec}
-                onToggle={() => toggleHabit(task.id)}
-                onDelete={() => deleteHabit(task.id)}
-              />
+              <HabitTaskItem key={task.id} task={task} rec={rec} onToggle={() => toggleHabit(task.id)} onDelete={() => deleteHabit(task.id)} />
             ))}
 
             {showAddHabit ? (
@@ -309,55 +264,32 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                   <button className="memo-save" onClick={() => addHabit()}>追加</button>
                   {!hasWeightHabit && (
-                    <button className="close-btn" style={{ fontSize: 11 }} onClick={() => addHabit('weight')}>
-                      体重記録
-                    </button>
+                    <button className="close-btn" style={{ fontSize: 11 }} onClick={() => addHabit('weight')}>体重記録</button>
                   )}
                   {!hasExerciseHabit && (
-                    <button className="close-btn" style={{ fontSize: 11 }} onClick={() => addHabit('exercise')}>
-                      運動
-                    </button>
+                    <button className="close-btn" style={{ fontSize: 11 }} onClick={() => addHabit('exercise')}>運動</button>
                   )}
-                  <button className="close-btn" onClick={() => { setShowAddHabit(false); setNewHabit('') }}>
-                    キャンセル
-                  </button>
+                  <button className="close-btn" onClick={() => { setShowAddHabit(false); setNewHabit('') }}>キャンセル</button>
                 </div>
               </div>
             ) : (
               <button
                 onClick={() => setShowAddHabit(true)}
-                style={{
-                  fontSize: 11,
-                  color: C.leather,
-                  background: 'transparent',
-                  border: `1px dashed ${C.leather}`,
-                  borderRadius: 4,
-                  padding: '3px 10px',
-                  cursor: 'pointer',
-                  marginTop: habitTasks.length > 0 ? 4 : 0
-                }}
+                style={{ fontSize: 11, color: C.leather, background: 'transparent', border: `1px dashed ${C.leather}`, borderRadius: 4, padding: '3px 10px', cursor: 'pointer', marginTop: habitTasks.length > 0 ? 4 : 0 }}
               >
                 + 習慣を追加
               </button>
             )}
           </div>
 
-          {/* やることリスト section */}
-          <div style={{
-            background: '#FAF7F2',
-            borderRadius: 5,
-            padding: '10px 10px 8px',
-            marginBottom: 10,
-            border: '1px solid rgba(122,144,128,0.2)'
-          }}>
+          {/* やることリスト */}
+          <div style={{ background: '#FAF7F2', borderRadius: 5, padding: '10px 10px 8px', marginBottom: 10, border: '1px solid rgba(122,144,128,0.2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: C.sage }}>やることリスト</span>
                 <span style={{ fontSize: 9, color: C.inkL, background: '#E4EDE8', borderRadius: 3, padding: '1px 5px' }}>一度きり</span>
               </div>
-              {todoTasks.length > 0 && (
-                <span style={{ fontSize: 10, color: C.inkL }}>{todoDone}/{todoTasks.length}</span>
-              )}
+              {todoTasks.length > 0 && <span style={{ fontSize: 10, color: C.inkL }}>{todoDone}/{todoTasks.length}</span>}
             </div>
 
             {todoTasks.length === 0 && !showAddTodo && (
@@ -365,12 +297,7 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
             )}
 
             {todoTasks.map(task => (
-              <TodoTaskItem
-                key={task.id}
-                task={task}
-                onToggle={() => toggleTodo(task.id)}
-                onDelete={() => deleteTodo(task.id)}
-              />
+              <TodoTaskItem key={task.id} task={task} onToggle={() => toggleTodo(task.id)} onDelete={() => deleteTodo(task.id)} />
             ))}
 
             {showAddTodo ? (
@@ -385,23 +312,12 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
                   autoFocus
                 />
                 <button className="memo-save" onClick={addTodo}>追加</button>
-                <button className="close-btn" onClick={() => { setShowAddTodo(false); setNewTodo('') }}>
-                  x
-                </button>
+                <button className="close-btn" onClick={() => { setShowAddTodo(false); setNewTodo('') }}>x</button>
               </div>
             ) : (
               <button
                 onClick={() => setShowAddTodo(true)}
-                style={{
-                  fontSize: 11,
-                  color: C.sage,
-                  background: 'transparent',
-                  border: `1px dashed ${C.sage}`,
-                  borderRadius: 4,
-                  padding: '3px 10px',
-                  cursor: 'pointer',
-                  marginTop: todoTasks.length > 0 ? 4 : 0
-                }}
+                style={{ fontSize: 11, color: C.sage, background: 'transparent', border: `1px dashed ${C.sage}`, borderRadius: 4, padding: '3px 10px', cursor: 'pointer', marginTop: todoTasks.length > 0 ? 4 : 0 }}
               >
                 + やることを追加
               </button>
@@ -450,22 +366,10 @@ export default function GoalPage({ state, actions }) {
         <div className="empty-msg">目標がまだありません</div>
       )}
       {goals.map(g => (
-        <GoalCard
-          key={g.id}
-          goal={g}
-          rec={rec}
-          onUpdate={updateGoal}
-          onDelete={deleteGoal}
-        />
+        <GoalCard key={g.id} goal={g} rec={rec} onUpdate={updateGoal} onDelete={deleteGoal} />
       ))}
       {adding ? (
-        <div style={{
-          background: '#EDE7DC',
-          padding: 12,
-          borderRadius: 6,
-          marginTop: 8,
-          border: '1px solid rgba(180,162,140,0.3)'
-        }}>
+        <div style={{ background: '#EDE7DC', padding: 12, borderRadius: 6, marginTop: 8, border: '1px solid rgba(180,162,140,0.3)' }}>
           <input
             className="date-input"
             style={{ marginBottom: 8 }}
