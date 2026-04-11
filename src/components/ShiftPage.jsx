@@ -4,14 +4,16 @@ import { C, SHIFTS, WJ, pad, d2s } from '../constants'
 const todayS = d2s(new Date())
 
 export default function ShiftPage({ state, actions }) {
-  const { sh, rec, miniYm } = state
-  const { updateSh, updateRec } = actions
+  const { sh, rec, miniYm, shTodos } = state
+  const { updateSh, updateRec, updateShTodos } = actions
   const [ym, setYm] = useState(miniYm)
   const [picker, setPicker] = useState(null)
   const [planInput, setPlanInput] = useState('')
   const [bulkOpen, setBulkOpen] = useState(false)
   const [bulkDraft, setBulkDraft] = useState({})
+  const [todoInput, setTodoInput] = useState('')
   const planRef = useRef(null)
+  const todoRef = useRef(null)
 
   const { y, m } = ym
   const dim = new Date(y, m + 1, 0).getDate()
@@ -87,6 +89,23 @@ export default function ShiftPage({ state, actions }) {
     updateSh(newSh)
     updateRec(newRec)
     setBulkOpen(false)
+  }
+
+  // やることリスト操作
+  const addTodo = () => {
+    const text = todoInput.trim()
+    if (!text) return
+    updateShTodos([...shTodos, { id: Date.now().toString(), text, done: false }])
+    setTodoInput('')
+    if (todoRef.current) todoRef.current.focus()
+  }
+
+  const toggleTodo = (id) => {
+    updateShTodos(shTodos.map(t => t.id === id ? { ...t, done: !t.done } : t))
+  }
+
+  const deleteTodo = (id) => {
+    updateShTodos(shTodos.filter(t => t.id !== id))
   }
 
   const counts = {}
@@ -168,6 +187,9 @@ export default function ShiftPage({ state, actions }) {
   }
 
   const pickerPlans = picker ? (rec[picker]?.plans || []) : []
+
+  const pendingTodos = shTodos.filter(t => !t.done)
+  const doneTodos = shTodos.filter(t => t.done)
 
   return (
     <>
@@ -270,6 +292,111 @@ export default function ShiftPage({ state, actions }) {
             {s.m} {s.l} <strong>{counts[key] || 0}</strong>日
           </div>
         ))}
+      </div>
+
+      {/* やることリスト */}
+      <div className="page-title" style={{ marginTop: 20 }}>TO-DO LIST</div>
+      <div style={{ marginBottom: 16 }}>
+        {/* 入力欄 */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          <input
+            ref={todoRef}
+            className="plan-input"
+            type="text"
+            placeholder="やることを入力…"
+            value={todoInput}
+            onChange={e => setTodoInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTodo() } }}
+          />
+          <button
+            className="plan-add-btn"
+            onClick={addTodo}
+            disabled={!todoInput.trim()}
+          >
+            追加
+          </button>
+        </div>
+
+        {shTodos.length === 0 && (
+          <div className="empty-msg" style={{ padding: '16px 0' }}>やることがまだありません</div>
+        )}
+
+        {/* 未完了 */}
+        {pendingTodos.map(t => (
+          <div
+            key={t.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '9px 10px',
+              marginBottom: 6,
+              background: '#FFFDF9',
+              borderRadius: 5,
+              border: '1px solid rgba(180,162,140,0.3)',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={false}
+              onChange={() => toggleTodo(t.id)}
+              style={{ accentColor: C.leather, width: 17, height: 17, flexShrink: 0, cursor: 'pointer' }}
+            />
+            <span style={{ flex: 1, fontSize: 13, color: C.ink, lineHeight: 1.4 }}>{t.text}</span>
+          </div>
+        ))}
+
+        {/* 完了済み */}
+        {doneTodos.length > 0 && (
+          <>
+            {pendingTodos.length > 0 && (
+              <div style={{ fontSize: 10, color: C.inkL, letterSpacing: 1, margin: '10px 0 6px', paddingLeft: 2 }}>
+                完了済み
+              </div>
+            )}
+            {doneTodos.map(t => (
+              <div
+                key={t.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '9px 10px',
+                  marginBottom: 6,
+                  background: 'rgba(237,231,220,0.4)',
+                  borderRadius: 5,
+                  border: '1px solid rgba(180,162,140,0.2)',
+                  opacity: 0.65,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={true}
+                  onChange={() => toggleTodo(t.id)}
+                  style={{ accentColor: C.inkL, width: 17, height: 17, flexShrink: 0, cursor: 'pointer' }}
+                />
+                <span style={{ flex: 1, fontSize: 13, color: C.inkL, textDecoration: 'line-through', lineHeight: 1.4 }}>
+                  {t.text}
+                </span>
+                <button
+                  onClick={() => deleteTodo(t.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: C.inkL,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    padding: '0 2px',
+                    flexShrink: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       {bulkOpen && (

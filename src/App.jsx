@@ -29,14 +29,16 @@ export default function App() {
   const [sh, setSh] = useState(() => lsGet('hbr-sh', {}))
   const [goals, setGoals] = useState(() => lsGet('hbr-goals', []))
   const [learn, setLearn] = useState(() => lsGet('hbr-learn', []))
+  const [shTodos, setShTodos] = useState(() => lsGet('hbr-sh-todos', []))
 
   const updateRec = useCallback((v) => { setRec(v); save('hbr-rec', v) }, [])
   const updateSh = useCallback((v) => { setSh(v); save('hbr-sh', v) }, [])
   const updateGoals = useCallback((v) => { setGoals(v); save('hbr-goals', v) }, [])
   const updateLearn = useCallback((v) => { setLearn(v); save('hbr-learn', v) }, [])
+  const updateShTodos = useCallback((v) => { setShTodos(v); save('hbr-sh-todos', v) }, [])
 
-  const state = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn }
-  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn }
+  const state = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn, shTodos }
+  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn, updateShTodos }
 
   const pages = { shift: ShiftPage, goal: GoalPage, history: HistoryPage, graph: GraphPage, learning: LearningPage }
   const PageComponent = pages[tab]
