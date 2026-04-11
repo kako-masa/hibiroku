@@ -120,11 +120,11 @@ export default function ShiftPage({ state, actions }) {
           {d}
         </span>
         {sv && <span className="cal-mark" style={{ color: sv.c }}>{sv.m}</span>}
-        {plans.length > 0 && (
-          <span className="cal-plan-title">
-            {plans[0].text.length > 5 ? plans[0].text.slice(0, 5) + '…' : plans[0].text}
-            {plans.length > 1 && <span className="cal-plan-more">+{plans.length - 1}</span>}
-          </span>
+        {plans.slice(0, 2).map(p => (
+          <span key={p.id} className="cal-plan-title">{p.text}</span>
+        ))}
+        {plans.length > 2 && (
+          <span className="cal-plan-more">+{plans.length - 2}</span>
         )}
       </button>
     )
