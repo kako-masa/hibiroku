@@ -195,6 +195,7 @@ export default function DailyPage({ state, actions }) {
                 const sv = sk ? SHIFTS[sk] : null
                 const isToday = ds === todayS
                 const isSel = ds === date
+                const plans = rec[ds]?.plans || []
                 const hasRec = rec[ds] && (
                   rec[ds].weight || rec[ds].sleep || rec[ds].fat ||
                   rec[ds].note || rec[ds].notes?.length || rec[ds].mood !== undefined
@@ -215,7 +216,13 @@ export default function DailyPage({ state, actions }) {
                       {day}
                     </span>
                     {sv && <span className="dcal-shift" style={{ color: sv.c }}>{sv.m}</span>}
-                    {hasRec && <span className="dcal-dot" />}
+                    {plans.slice(0, 2).map(p => (
+                      <span key={p.id} className="dcal-plan-title">{p.text}</span>
+                    ))}
+                    {plans.length > 2 && (
+                      <span className="dcal-plan-more">+{plans.length - 2}</span>
+                    )}
+                    {hasRec && plans.length === 0 && <span className="dcal-dot" />}
                   </button>
                 )
               })}
