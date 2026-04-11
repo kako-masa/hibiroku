@@ -8,6 +8,8 @@ export default function ShiftPage({ state, actions }) {
   const { updateSh, updateRec } = actions
   const [ym, setYm] = useState(miniYm)
   const [picker, setPicker] = useState(null)
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [bulkDraft, setBulkDraft] = useState({})
 
   const { y, m } = ym
   const dim = new Date(y, m + 1, 0).getDate()
@@ -34,6 +36,35 @@ export default function ShiftPage({ state, actions }) {
     updateSh(newSh)
     updateRec(newRec)
     setPicker(null)
+  }
+
+  const openBulk = () => {
+    const draft = {}
+    for (let d = 1; d <= dim; d++) {
+      const ds = `${y}-${pad(m + 1)}-${pad(d)}`
+      const k = sh[ds] || rec[ds]?.shift
+      if (k) draft[ds] = k
+    }
+    setBulkDraft(draft)
+    setBulkOpen(true)
+  }
+
+  const saveBulk = () => {
+    const newSh = { ...sh }
+    const newRec = { ...rec }
+    for (let d = 1; d <= dim; d++) {
+      const ds = `${y}-${pad(m + 1)}-${pad(d)}`
+      if (bulkDraft[ds]) {
+        newSh[ds] = bulkDraft[ds]
+        newRec[ds] = { ...newRec[ds], shift: bulkDraft[ds] }
+      } else {
+        delete newSh[ds]
+        if (newRec[ds]) newRec[ds] = { ...newRec[ds], shift: undefined }
+      }
+    }
+    updateSh(newSh)
+    updateRec(newRec)
+    setBulkOpen(false)
   }
 
   const counts = {}
@@ -73,6 +104,43 @@ export default function ShiftPage({ state, actions }) {
     )
   }
 
+  const bulkRows = []
+  for (let d = 1; d <= dim; d++) {
+    const ds = `${y}-${pad(m + 1)}-${pad(d)}`
+    const dow = new Date(y, m, d).getDay()
+    const isToday = ds === todayS
+    const sel = bulkDraft[ds]
+    const dowColor = dow === 0 ? '#A06060' : dow === 6 ? '#607080' : C.inkL
+    bulkRows.push(
+      <div key={ds} className="bulk-row">
+        <div className="bulk-date" style={{ color: isToday ? C.leatherM : C.ink }}>
+          <span className="bulk-day-num" style={{ fontWeight: isToday ? 700 : 400 }}>{m + 1}/{d}</span>
+          <span className="bulk-dow" style={{ color: dowColor }}>{WJ[dow]}</span>
+        </div>
+        <div className="bulk-shifts">
+          {Object.entries(SHIFTS).map(([key, s]) => (
+            <button
+              key={key}
+              className="bulk-shift-btn"
+              style={{
+                background: sel === key ? s.c : s.bg,
+                color: sel === key ? '#fff' : s.c,
+                border: `1.5px solid ${s.c}`,
+              }}
+              onClick={() => setBulkDraft(prev => ({
+                ...prev,
+                [ds]: prev[ds] === key ? undefined : key,
+              }))}
+            >
+              <span className="bulk-shift-icon">{s.m}</span>
+              <span className="bulk-shift-label">{s.l}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="page-title">SHIFT CALENDAR</div>
@@ -81,6 +149,10 @@ export default function ShiftPage({ state, actions }) {
         <button className="arrow-btn" onClick={() => goMonth(-1)}>‹</button>
         <div className="month-label">{y}年 {m + 1}月</div>
         <button className="arrow-btn" onClick={() => goMonth(1)}>›</button>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <button className="bulk-open-btn" onClick={openBulk}>一括入力</button>
       </div>
 
       {picker && (
@@ -137,6 +209,24 @@ export default function ShiftPage({ state, actions }) {
           </div>
         ))}
       </div>
+
+      {bulkOpen && (
+        <div className="bulk-overlay">
+          <div className="bulk-modal">
+            <div className="bulk-modal-header">
+              <span className="bulk-modal-title">{y}年 {m + 1}月　一括入力</span>
+              <button className="bulk-close-btn" onClick={() => setBulkOpen(false)}>✕</button>
+            </div>
+            <div className="bulk-list">
+              {bulkRows}
+            </div>
+            <div className="bulk-footer">
+              <button className="bulk-cancel-btn" onClick={() => setBulkOpen(false)}>キャンセル</button>
+              <button className="bulk-save-btn" onClick={saveBulk}>保存する</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
