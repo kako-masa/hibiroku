@@ -165,24 +165,6 @@ export default function DailyPage({ state, actions }) {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto' }}>
-      <div id="date-bar">
-        <button className="arrow-btn" onClick={() => goDay(-1)}>‹</button>
-        <div className="date-center">
-          <div className="date-dow-en">{WE[dateObj.getDay()]}</div>
-          <div className="date-num">
-            {dateObj.getMonth() + 1}
-            <span className="date-slash">/</span>
-            {dateObj.getDate()}
-          </div>
-          <div className="date-dow">
-            {WJ[dateObj.getDay()]}曜日
-            {isToday && <span className="date-today">Today</span>}
-          </div>
-        </div>
-        <button className="arrow-btn" onClick={() => goDay(1)}>›</button>
-      </div>
-      <div className="date-str">{date}</div>
-
       {/* ── インラインカレンダー ── */}
       <div className="dcal-wrap">
         <button className="dcal-toggle" onClick={() => setCalOpen(o => !o)}>
@@ -241,6 +223,24 @@ export default function DailyPage({ state, actions }) {
           </div>
         )}
       </div>
+
+      <div id="date-bar">
+        <button className="arrow-btn" onClick={() => goDay(-1)}>‹</button>
+        <div className="date-center">
+          <div className="date-dow-en">{WE[dateObj.getDay()]}</div>
+          <div className="date-num">
+            {dateObj.getMonth() + 1}
+            <span className="date-slash">/</span>
+            {dateObj.getDate()}
+          </div>
+          <div className="date-dow">
+            {WJ[dateObj.getDay()]}曜日
+            {isToday && <span className="date-today">Today</span>}
+          </div>
+        </div>
+        <button className="arrow-btn" onClick={() => goDay(1)}>›</button>
+      </div>
+      <div className="date-str">{date}</div>
 
       <div style={{ padding: '10px 16px 30px' }}>
         {/* シフト */}

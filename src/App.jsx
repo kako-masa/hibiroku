@@ -23,6 +23,7 @@ function save(key, value) {
 export default function App() {
   const [tab, setTab] = useState('daily')
   const [date, setDate] = useState(todayS)
+  const [miniCalOpen, setMiniCalOpen] = useState(false)
   const [miniYm, setMiniYm] = useState({ y: today.getFullYear(), m: today.getMonth() })
   const [rec, setRec] = useState(() => lsGet('hbr-rec', {}))
   const [sh, setSh] = useState(() => lsGet('hbr-sh', {}))
@@ -34,8 +35,8 @@ export default function App() {
   const updateGoals = useCallback((v) => { setGoals(v); save('hbr-goals', v) }, [])
   const updateLearn = useCallback((v) => { setLearn(v); save('hbr-learn', v) }, [])
 
-  const state = { tab, date, miniYm, rec, sh, goals, learn }
-  const actions = { setTab, setDate, setMiniYm, updateRec, updateSh, updateGoals, updateLearn }
+  const state = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn }
+  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn }
 
   const pages = { shift: ShiftPage, goal: GoalPage, history: HistoryPage, graph: GraphPage, learning: LearningPage }
   const PageComponent = pages[tab]
