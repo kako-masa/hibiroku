@@ -469,8 +469,23 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   font-family: inherit;
 }
 .cal-cell.today-cell { border: 1.5px solid #8B6650; }
+.cal-cell.cal-cell-sel { border: 2px solid #8B6650; }
 .cal-day { font-size: 10px; color: #2C2420; }
 .cal-mark { font-size: 11px; }
+.cal-plan-title {
+  font-size: 7px;
+  color: #7A6050;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+  padding: 0 2px;
+}
+.cal-plan-more {
+  color: #A08868;
+  margin-left: 1px;
+}
 .picker-box {
   background: #FFFDF9;
   border: 1px solid rgba(180,162,140,0.3);
@@ -478,8 +493,68 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   padding: 10px;
   margin-bottom: 12px;
 }
-.picker-title { font-size: 11px; color: #5C4A3E; margin-bottom: 8px; }
-.picker-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 8px; }
+.picker-title { font-size: 12px; font-weight: 700; color: #5C4030; margin-bottom: 8px; }
+.picker-section-label {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #9C8070;
+  margin-bottom: 5px;
+}
+.picker-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 4px; }
+.plan-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.plan-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #F5EFE8;
+  border-radius: 4px;
+  padding: 5px 8px;
+}
+.plan-item-text {
+  flex: 1;
+  font-size: 12px;
+  color: #3C2818;
+  line-height: 1.4;
+}
+.plan-del-btn {
+  background: none;
+  border: none;
+  color: #B09080;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.plan-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.plan-input {
+  flex: 1;
+  border: 1px solid rgba(180,162,140,0.4);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  background: #fff;
+  color: #3C2818;
+  outline: none;
+}
+.plan-input:focus { border-color: #8B6650; }
+.plan-add-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: none;
+  background: #8B6650;
+  color: #fff;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.plan-add-btn:disabled { background: #C8B8A8; cursor: default; }
 .close-btn {
   width: 100%;
   background: transparent;

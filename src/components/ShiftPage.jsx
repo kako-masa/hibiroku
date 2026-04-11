@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { C, SHIFTS, WJ, pad, d2s } from '../constants'
 
 const todayS = d2s(new Date())
@@ -8,8 +8,10 @@ export default function ShiftPage({ state, actions }) {
   const { updateSh, updateRec } = actions
   const [ym, setYm] = useState(miniYm)
   const [picker, setPicker] = useState(null)
+  const [planInput, setPlanInput] = useState('')
   const [bulkOpen, setBulkOpen] = useState(false)
   const [bulkDraft, setBulkDraft] = useState({})
+  const planRef = useRef(null)
 
   const { y, m } = ym
   const dim = new Date(y, m + 1, 0).getDate()
@@ -21,12 +23,16 @@ export default function ShiftPage({ state, actions }) {
     setPicker(null)
   }
 
+  const openPicker = (ds) => {
+    setPicker(picker === ds ? null : ds)
+    setPlanInput('')
+  }
+
   const setShift = (ds, key) => {
     const newSh = { ...sh, [ds]: key }
     const newRec = { ...rec, [ds]: { ...rec[ds], shift: key } }
     updateSh(newSh)
     updateRec(newRec)
-    setPicker(null)
   }
 
   const clearShift = (ds) => {
@@ -35,7 +41,23 @@ export default function ShiftPage({ state, actions }) {
     const newRec = { ...rec, [ds]: { ...rec[ds], shift: undefined } }
     updateSh(newSh)
     updateRec(newRec)
-    setPicker(null)
+  }
+
+  const addPlan = (ds) => {
+    const text = planInput.trim()
+    if (!text) return
+    const entry = { id: Date.now().toString(), text }
+    const existing = rec[ds]?.plans || []
+    const newRec = { ...rec, [ds]: { ...rec[ds], plans: [...existing, entry] } }
+    updateRec(newRec)
+    setPlanInput('')
+    if (planRef.current) planRef.current.focus()
+  }
+
+  const deletePlan = (ds, id) => {
+    const existing = rec[ds]?.plans || []
+    const newRec = { ...rec, [ds]: { ...rec[ds], plans: existing.filter(p => p.id !== id) } }
+    updateRec(newRec)
   }
 
   const openBulk = () => {
@@ -84,22 +106,26 @@ export default function ShiftPage({ state, actions }) {
     const ds = `${y}-${pad(m + 1)}-${pad(d)}`
     const k = sh[ds] || rec[ds]?.shift
     const sv = k ? SHIFTS[k] : null
+    const plans = rec[ds]?.plans || []
     const isToday = ds === todayS
     const isSel = picker === ds
     cells.push(
       <button
         key={ds}
-        className={`cal-cell${isToday ? ' today-cell' : ''}`}
-        style={{
-          background: sv ? sv.bg : 'transparent',
-          border: isSel ? `2px solid ${C.leather}` : undefined,
-        }}
-        onClick={() => setPicker(picker === ds ? null : ds)}
+        className={`cal-cell${isToday ? ' today-cell' : ''}${isSel ? ' cal-cell-sel' : ''}`}
+        style={{ background: sv ? sv.bg : 'transparent' }}
+        onClick={() => openPicker(ds)}
       >
         <span className="cal-day" style={{ color: isToday ? C.leatherM : C.ink, fontWeight: isToday ? 700 : 400 }}>
           {d}
         </span>
         {sv && <span className="cal-mark" style={{ color: sv.c }}>{sv.m}</span>}
+        {plans.length > 0 && (
+          <span className="cal-plan-title">
+            {plans[0].text.length > 5 ? plans[0].text.slice(0, 5) + '…' : plans[0].text}
+            {plans.length > 1 && <span className="cal-plan-more">+{plans.length - 1}</span>}
+          </span>
+        )}
       </button>
     )
   }
@@ -141,6 +167,8 @@ export default function ShiftPage({ state, actions }) {
     )
   }
 
+  const pickerPlans = picker ? (rec[picker]?.plans || []) : []
+
   return (
     <>
       <div className="page-title">SHIFT CALENDAR</div>
@@ -157,7 +185,10 @@ export default function ShiftPage({ state, actions }) {
 
       {picker && (
         <div className="picker-box">
-          <div className="picker-title">{picker} のシフト</div>
+          <div className="picker-title">{picker}</div>
+
+          {/* シフト選択 */}
+          <div className="picker-section-label">SHIFT</div>
           <div className="picker-grid">
             {Object.entries(SHIFTS).map(([key, s]) => {
               const cur = sh[picker] || rec[picker]?.shift
@@ -177,9 +208,40 @@ export default function ShiftPage({ state, actions }) {
               )
             })}
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+
+          {/* 予定セクション */}
+          <div className="picker-section-label" style={{ marginTop: 10 }}>PLANS</div>
+          {pickerPlans.length > 0 && (
+            <div className="plan-list">
+              {pickerPlans.map(p => (
+                <div key={p.id} className="plan-item">
+                  <span className="plan-item-text">{p.text}</span>
+                  <button className="plan-del-btn" onClick={() => deletePlan(picker, p.id)}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="plan-input-row">
+            <input
+              ref={planRef}
+              className="plan-input"
+              type="text"
+              placeholder="予定を入力（例：病院 14:00）"
+              value={planInput}
+              onChange={e => setPlanInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPlan(picker) } }}
+            />
+            <button
+              className="plan-add-btn"
+              onClick={() => addPlan(picker)}
+              disabled={!planInput.trim()}
+            >追加</button>
+          </div>
+
+          {/* フッターボタン */}
+          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             {(sh[picker] || rec[picker]?.shift) && (
-              <button className="close-btn" style={{ color: C.rose }} onClick={() => clearShift(picker)}>クリア</button>
+              <button className="close-btn" style={{ color: C.rose }} onClick={() => clearShift(picker)}>シフトクリア</button>
             )}
             <button className="close-btn" style={{ flex: 1 }} onClick={() => setPicker(null)}>閉じる</button>
           </div>
