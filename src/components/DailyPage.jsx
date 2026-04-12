@@ -142,6 +142,10 @@ export default function DailyPage({ state, actions }) {
     })
   }
 
+  // 目標体重・体脂肪をlocalStorageから読む（GraphPageで保存）
+  const goalWeight = (() => { try { const v = localStorage.getItem('hbr-goal-weight'); return v ? parseFloat(v) : null } catch { return null } })()
+  const goalFat    = (() => { try { const v = localStorage.getItem('hbr-goal-fat');    return v ? parseFloat(v) : null } catch { return null } })()
+
   // 習慣グループ：habitTasksがあるgoalのみ
   const habitGroups = (goals || [])
     .filter(g => (g.habitTasks || []).length > 0)
@@ -458,23 +462,35 @@ export default function DailyPage({ state, actions }) {
           <div className="sec-label">VITALS</div>
           <div className="vitals-row">
             {[
-              { key: 'weight', label: '体重', unit: 'kg', step: '0.1', placeholder: prevRec.weight ? `前回 ${prevRec.weight}` : '58.0' },
-              { key: 'fat',    label: '体脂肪', unit: '%', step: '0.1', placeholder: prevRec.fat ? `前回 ${prevRec.fat}` : '25.0' },
-              { key: 'sleep',  label: '睡眠',   unit: 'h', step: '0.1', placeholder: prevRec.sleep ? `前回 ${prevRec.sleep}` : '7.0' },
-            ].map(({ key, label, unit, step, placeholder }) => (
-              <div key={key} className="vital-box">
-                <div className="vital-label">{label}</div>
-                <input
-                  className="vital-input"
-                  type="number"
-                  step={step}
-                  defaultValue={r[key] || ''}
-                  placeholder={placeholder}
-                  onBlur={(e) => setRecField(key, e.target.value)}
-                />
-                <div className="vital-unit">{unit}</div>
-              </div>
-            ))}
+              { key: 'weight', label: '体重', unit: 'kg', step: '0.1', placeholder: prevRec.weight ? `前回 ${prevRec.weight}` : '58.0', goal: goalWeight },
+              { key: 'fat',    label: '体脂肪', unit: '%', step: '0.1', placeholder: prevRec.fat ? `前回 ${prevRec.fat}` : '25.0',  goal: goalFat    },
+              { key: 'sleep',  label: '睡眠',   unit: 'h', step: '0.1', placeholder: prevRec.sleep ? `前回 ${prevRec.sleep}` : '7.0', goal: null       },
+            ].map(({ key, label, unit, step, placeholder, goal }) => {
+              const curVal = parseFloat(r[key])
+              const diff = (!isNaN(curVal) && goal !== null) ? Math.abs(curVal - goal) : null
+              const reached = diff !== null && diff < 0.05
+              return (
+                <div key={key} className="vital-box">
+                  <div className="vital-label">{label}</div>
+                  <input
+                    className="vital-input"
+                    type="number"
+                    step={step}
+                    defaultValue={r[key] || ''}
+                    placeholder={placeholder}
+                    onBlur={(e) => setRecField(key, e.target.value)}
+                  />
+                  <div className="vital-unit">{unit}</div>
+                  {goal !== null && (
+                    <div style={{ fontSize: 8, color: '#9C8070', marginTop: 3, textAlign: 'center', lineHeight: 1.5 }}>
+                      目標 {goal}{unit}
+                      {reached && <><br />✓ 達成</>}
+                      {!reached && diff !== null && <><br />あと {diff.toFixed(1)}{unit}</>}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
 
