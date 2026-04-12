@@ -11,8 +11,7 @@ export default function HistoryPage({ state, actions }) {
   const allDates = Object.keys(rec)
     .filter(d => {
       const r = rec[d]
-      return r && (r.mood !== undefined || r.notes?.length || r.note ||
-                   r.shift || sh[d] || r.exercise)
+      return r && (r.notes?.length > 0 || (r.note && r.note.trim()))
     })
     .sort()
     .reverse()
