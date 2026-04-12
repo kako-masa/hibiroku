@@ -301,18 +301,20 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
             ))}
 
             {showAddTodo ? (
-              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+              <div style={{ marginTop: 6 }}>
                 <input
                   className="ex-note-input"
-                  style={{ flex: 1 }}
+                  style={{ width: '100%', marginBottom: 6, boxSizing: 'border-box' }}
                   placeholder="やることを追加..."
                   value={newTodo}
                   onChange={e => setNewTodo(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addTodo()}
                   autoFocus
                 />
-                <button className="memo-save" onClick={addTodo}>追加</button>
-                <button className="close-btn" onClick={() => { setShowAddTodo(false); setNewTodo('') }}>x</button>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button className="memo-save" onClick={addTodo}>追加</button>
+                  <button className="close-btn" onClick={() => { setShowAddTodo(false); setNewTodo('') }}>キャンセル</button>
+                </div>
               </div>
             ) : (
               <button
