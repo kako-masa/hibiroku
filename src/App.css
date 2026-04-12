@@ -867,19 +867,36 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 }
 
 /* ── グラフページ ── */
-.graph-range-btns {
+.graph-tab-btns {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
-.graph-range-btn {
+.graph-tab-btn {
   flex: 1;
-  padding: 9px;
+  padding: 7px 4px;
   border: 1px solid rgba(180,162,140,0.4);
   border-radius: 4px;
   background: transparent;
   color: #5C4A3E;
-  font-size: 13px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.graph-range-btns {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.graph-range-btn {
+  flex: 1;
+  padding: 7px;
+  border: 1px solid rgba(180,162,140,0.4);
+  border-radius: 4px;
+  background: transparent;
+  color: #5C4A3E;
+  font-size: 12px;
   cursor: pointer;
   font-family: inherit;
   letter-spacing: 1px;
@@ -892,7 +909,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 }
 .graph-summary {
   display: flex;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   background: #FFFDF9;
   border-radius: 6px;
   border: 1px solid rgba(180,162,140,0.2);
@@ -917,6 +934,39 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   font-weight: 700;
   line-height: 1;
 }
+.graph-goal-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: #FFFDF9;
+  border-radius: 5px;
+  border: 1px solid rgba(180,162,140,0.2);
+}
+.graph-goal-label {
+  font-size: 10px;
+  color: #9C8070;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.graph-goal-input {
+  flex: 1;
+  border: none;
+  border-bottom: 1px solid rgba(180,162,140,0.4);
+  background: transparent;
+  font-size: 16px;
+  font-family: Georgia, serif;
+  color: #2C2420;
+  outline: none;
+  padding: 2px 0;
+  text-align: right;
+  max-width: 80px;
+}
+.graph-goal-unit {
+  font-size: 10px;
+  color: #9C8070;
+}
 .graph-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -926,23 +976,29 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   padding: 10px 8px;
   margin-bottom: 10px;
 }
-.graph-legend {
-  display: flex;
-  flex-direction: column;
+.graph-mood-grid {
+  display: grid;
   gap: 6px;
-  padding: 4px 2px;
+  margin-bottom: 10px;
 }
-.graph-legend-group {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.graph-mood-cell {
+  background: #FFFDF9;
+  border: 1px solid rgba(180,162,140,0.2);
+  border-radius: 5px;
+  padding: 6px 4px;
+  text-align: center;
 }
-.graph-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.graph-mood-date {
   font-size: 9px;
-  color: #5C4A3E;
+  margin-bottom: 1px;
+}
+.graph-mood-dow {
+  font-size: 8px;
+  margin-bottom: 4px;
+}
+.graph-mood-emoji {
+  font-size: 20px;
+  line-height: 1;
 }
 /* ── 日記一覧（HistoryPage） ── */
 .diary-list {
