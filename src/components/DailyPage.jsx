@@ -470,7 +470,7 @@ export default function DailyPage({ state, actions }) {
               const diff = (!isNaN(curVal) && goal !== null) ? Math.abs(curVal - goal) : null
               const reached = diff !== null && diff < 0.05
               return (
-                <div key={key} className="vital-box">
+                <div key={`${date}-${key}`} className="vital-box">
                   <div className="vital-label">{label}</div>
                   <input
                     className="vital-input"
