@@ -26,7 +26,10 @@ export default function DailyPage({ state, actions }) {
   const [habitOpen, setHabitOpen] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hbr-habit-open') ?? 'true') } catch { return true }
   })
+  const [isListening, setIsListening] = useState(false)
   const noteRef = useRef(null)
+  const recognitionRef = useRef(null)
+  const voiceBaseRef = useRef('')
 
   const dateObj = new Date(date.replace(/-/g, '/'))
   const isToday = date === todayS
@@ -116,6 +119,48 @@ export default function DailyPage({ state, actions }) {
   const handleExNote = (e) => {
     const newRec = { ...rec, [date]: { ...rec[date], exNote: e.target.value } }
     save('hbr-rec', newRec)
+  }
+
+  const toggleVoice = () => {
+    if (isListening) {
+      recognitionRef.current?.stop()
+      return
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) {
+      alert('このブラウザは音声認識に対応していません。\nChromeまたはEdgeをお使いください。')
+      return
+    }
+    const recognition = new SR()
+    recognition.lang = 'ja-JP'
+    recognition.continuous = true
+    recognition.interimResults = true
+    voiceBaseRef.current = noteInput
+    recognition.onresult = (e) => {
+      let interim = ''
+      let finalText = voiceBaseRef.current
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          finalText += e.results[i][0].transcript
+          voiceBaseRef.current = finalText
+        } else {
+          interim += e.results[i][0].transcript
+        }
+      }
+      setNoteInput(finalText + interim)
+    }
+    recognition.onend = () => {
+      setIsListening(false)
+      setNoteInput(voiceBaseRef.current)
+      if (noteRef.current) noteRef.current.focus()
+    }
+    recognition.onerror = (e) => {
+      if (e.error !== 'aborted') console.warn('音声認識エラー:', e.error)
+      setIsListening(false)
+    }
+    recognitionRef.current = recognition
+    recognition.start()
+    setIsListening(true)
   }
 
   // ハビットトラッカー：選択中の日付のチェックをgoalsに反映
@@ -539,7 +584,7 @@ export default function DailyPage({ state, actions }) {
           <div className="note-input-wrap">
             <textarea
               ref={noteRef}
-              className="note-area"
+              className={`note-area${isListening ? ' note-area-listening' : ''}`}
               rows="3"
               placeholder="今日のこと、気になったこと、感じたこと…"
               value={noteInput}
@@ -548,13 +593,23 @@ export default function DailyPage({ state, actions }) {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addNote() }
               }}
             />
-            <button
-              className="note-add-btn"
-              onClick={addNote}
-              disabled={!noteInput.trim()}
-            >
-              保存
-            </button>
+            <div className="note-btn-row">
+              <button
+                className={`mic-btn${isListening ? ' mic-listening' : ''}`}
+                onClick={toggleVoice}
+                title={isListening ? '録音を停止' : '音声入力'}
+                type="button"
+              >
+                {isListening ? '⏹' : '🎤'}
+              </button>
+              <button
+                className="note-add-btn"
+                onClick={addNote}
+                disabled={!noteInput.trim()}
+              >
+                保存
+              </button>
+            </div>
           </div>
           {r.note && !(r.notes?.length) && (
             <div className="note-legacy">

@@ -263,8 +263,40 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   resize: none;
   outline: none;
 }
+.note-area-listening {
+  border-bottom-color: rgba(231,76,60,0.5);
+}
+.note-btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mic-btn {
+  background: transparent;
+  border: 1.5px solid rgba(180,162,140,0.45);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+.mic-btn:hover { border-color: #8B6650; }
+.mic-btn.mic-listening {
+  background: #e74c3c;
+  border-color: #e74c3c;
+  animation: mic-blink 1s ease-in-out infinite;
+}
+@keyframes mic-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
 .note-add-btn {
-  align-self: flex-end;
   background: #8B6650;
   color: #fff;
   border: none;
