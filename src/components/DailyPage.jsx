@@ -4,11 +4,11 @@ import { C, SHIFTS, MOODS, WJ, WE, d2s, pad, save } from '../constants'
 const today = new Date()
 const todayS = d2s(today)
 
-// 今日その習慣が完了しているか（DailyPage用）
-function isHabitDoneToday(task, rec) {
-  if (task.linkedTo === 'weight') return !!(rec[todayS]?.weight)
-  if (task.linkedTo === 'exercise') return !!(rec[todayS]?.exercise)
-  return !!(task.dailyDone?.[todayS])
+// 指定日にその習慣が完了しているか
+function isHabitDone(task, rec, date) {
+  if (task.linkedTo === 'weight') return !!(rec[date]?.weight)
+  if (task.linkedTo === 'exercise') return !!(rec[date]?.exercise)
+  return !!(task.dailyDone?.[date])
 }
 
 export default function DailyPage({ state, actions }) {
@@ -118,16 +118,16 @@ export default function DailyPage({ state, actions }) {
     save('hbr-rec', newRec)
   }
 
-  // ハビットトラッカー：今日のチェックをgoalsに反映
-  const toggleHabitToday = (goalId, taskId) => {
+  // ハビットトラッカー：選択中の日付のチェックをgoalsに反映
+  const toggleHabitForDate = (goalId, taskId) => {
     const updated = (goals || []).map(g => {
       if (g.id !== goalId) return g
       return {
         ...g,
         habitTasks: (g.habitTasks || []).map(t => {
           if (t.id !== taskId) return t
-          const prev = t.dailyDone?.[todayS]
-          return { ...t, dailyDone: { ...(t.dailyDone || {}), [todayS]: !prev } }
+          const prev = t.dailyDone?.[date]
+          return { ...t, dailyDone: { ...(t.dailyDone || {}), [date]: !prev } }
         })
       }
     })
@@ -156,7 +156,7 @@ export default function DailyPage({ state, actions }) {
     }))
 
   const totalHabits = habitGroups.reduce((s, g) => s + g.tasks.length, 0)
-  const doneHabits = habitGroups.reduce((s, g) => s + g.tasks.filter(t => isHabitDoneToday(t, rec)).length, 0)
+  const doneHabits = habitGroups.reduce((s, g) => s + g.tasks.filter(t => isHabitDone(t, rec, date)).length, 0)
 
   const fetchAI = async () => {
     setAiLoading(true)
@@ -326,7 +326,7 @@ export default function DailyPage({ state, actions }) {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: C.leather }}>
-                  今日のハビット
+                  {isToday ? '今日のハビット' : `${dateObj.getMonth()+1}/${dateObj.getDate()} のハビット`}
                 </span>
                 {/* ミニ進捗バー */}
                 <div style={{ width: 60, height: 4, background: '#EDE7DC', borderRadius: 2, overflow: 'hidden' }}>
@@ -361,7 +361,7 @@ export default function DailyPage({ state, actions }) {
                       {group.goalTitle}
                     </div>
                     {group.tasks.map(task => {
-                      const done = isHabitDoneToday(task, rec)
+                      const done = isHabitDone(task, rec, date)
                       const isLinked = !!task.linkedTo
                       return (
                         <div
@@ -378,7 +378,7 @@ export default function DailyPage({ state, actions }) {
                             type="checkbox"
                             checked={done}
                             disabled={isLinked}
-                            onChange={() => !isLinked && toggleHabitToday(group.goalId, task.id)}
+                            onChange={() => !isLinked && toggleHabitForDate(group.goalId, task.id)}
                             style={{
                               accentColor: C.leather,
                               width: 17,
