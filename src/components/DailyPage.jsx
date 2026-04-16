@@ -27,6 +27,7 @@ export default function DailyPage({ state, actions }) {
     try { return JSON.parse(localStorage.getItem('hbr-habit-open') ?? 'true') } catch { return true }
   })
   const [isListening, setIsListening] = useState(false)
+  const [pastOpen, setPastOpen] = useState(false)
   const noteRef = useRef(null)
   const recognitionRef = useRef(null)
   const voiceBaseRef = useRef('')
@@ -202,6 +203,21 @@ export default function DailyPage({ state, actions }) {
 
   const totalHabits = habitGroups.reduce((s, g) => s + g.tasks.length, 0)
   const doneHabits = habitGroups.reduce((s, g) => s + g.tasks.filter(t => isHabitDone(t, rec, date)).length, 0)
+
+  // 過去の同じ日（1〜3年前）の記録
+  const pastDays = [1, 2, 3].map(yearsAgo => {
+    const [y, mo, d] = date.split('-').map(Number)
+    const pastYear = y - yearsAgo
+    const pastDate = `${pastYear}-${pad(mo)}-${pad(d)}`
+    // うるう年考慮：2/29 → 非うるう年はスキップ
+    const testDate = new Date(`${pastYear}/${pad(mo)}/${pad(d)}`)
+    if (isNaN(testDate.getTime()) || testDate.getDate() !== d) return null
+    const pr = rec[pastDate]
+    if (!pr) return null
+    const hasContent = pr.notes?.length || pr.note || pr.mood !== undefined || pr.shift || pr.weight || pr.exercise
+    if (!hasContent) return null
+    return { yearsAgo, pastDate, pastYear, pr, shiftData: pr.shift ? SHIFTS[pr.shift] : null }
+  }).filter(Boolean)
 
   const fetchAI = async () => {
     setAiLoading(true)
@@ -652,6 +668,111 @@ export default function DailyPage({ state, actions }) {
             </div>
           ))}
         </div>
+
+        {/* 過去の同じ日 */}
+        {pastDays.length > 0 && (
+          <div style={{
+            border: '1px solid rgba(107,79,58,0.15)',
+            borderRadius: 6,
+            marginBottom: 16,
+            overflow: 'hidden',
+            background: '#FAF8F5',
+          }}>
+            <button
+              onClick={() => setPastOpen(v => !v)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: '#A08878' }}>
+                過去の同じ日 ({pastDays.length}件)
+              </span>
+              <span style={{ fontSize: 9, color: '#B09888' }}>{pastOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {pastOpen && (
+              <div style={{ padding: '0 12px 12px' }}>
+                {pastDays.map(({ yearsAgo, pastDate, pastYear, pr, shiftData }, idx) => {
+                  const moodStr = pr.mood !== undefined ? MOODS[pr.mood] : null
+                  const moodEmoji = moodStr ? moodStr.split(' ')[0] : null
+                  const notesList = pr.notes?.length ? pr.notes : pr.note ? [{ id: 'legacy', time: null, text: pr.note }] : []
+                  return (
+                    <div
+                      key={pastDate}
+                      style={{
+                        marginTop: idx === 0 ? 2 : 12,
+                        paddingTop: idx === 0 ? 0 : 12,
+                        borderTop: idx === 0 ? 'none' : '1px solid rgba(180,162,140,0.2)',
+                      }}
+                    >
+                      {/* 年ヘッダー */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
+                        <span style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: '#A08878',
+                          letterSpacing: 0.5,
+                        }}>
+                          {yearsAgo}年前 — {pastYear}年
+                        </span>
+                        {shiftData && (
+                          <span style={{
+                            fontSize: 9,
+                            background: shiftData.bg,
+                            color: shiftData.c,
+                            border: `1px solid ${shiftData.c}`,
+                            borderRadius: 3,
+                            padding: '1px 6px',
+                            fontWeight: 600,
+                          }}>
+                            {shiftData.m} {shiftData.l}
+                          </span>
+                        )}
+                        {moodEmoji && (
+                          <span style={{ fontSize: 14, opacity: 0.75 }}>{moodEmoji}</span>
+                        )}
+                      </div>
+                      {/* メモ */}
+                      {notesList.length > 0 ? (
+                        notesList.map((n, ni) => (
+                          <div key={n.id || ni} style={{
+                            display: 'flex',
+                            gap: 8,
+                            marginBottom: 4,
+                            alignItems: 'flex-start',
+                          }}>
+                            {n.time && (
+                              <span style={{ fontSize: 10, color: '#B8A898', flexShrink: 0, paddingTop: 2 }}>
+                                {n.time}
+                              </span>
+                            )}
+                            <span style={{
+                              fontSize: 13,
+                              color: '#6A5A52',
+                              lineHeight: 1.7,
+                              flex: 1,
+                            }}>
+                              {n.text}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: 12, color: '#B8A898' }}>メモなし</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* AI アドバイス */}
         <div>
