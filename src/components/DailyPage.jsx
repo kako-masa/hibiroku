@@ -228,13 +228,13 @@ export default function DailyPage({ state, actions }) {
               <button className="dcal-nav-btn" onClick={() => goCalMonth(1)}>›</button>
             </div>
             <div className="dcal-grid">
-              {WJ.map((w, i) => (
+              {['月', '火', '水', '木', '金', '土', '日'].map((w, i) => (
                 <div key={w} className="dcal-hd"
-                  style={{ color: i === 0 ? '#A06060' : i === 6 ? '#607080' : C.inkL }}>
+                  style={{ color: i === 5 ? '#607080' : i === 6 ? '#A06060' : C.inkL }}>
                   {w}
                 </div>
               ))}
-              {Array.from({ length: new Date(miniYm.y, miniYm.m, 1).getDay() }).map((_, i) => (
+              {Array.from({ length: (new Date(miniYm.y, miniYm.m, 1).getDay() + 6) % 7 }).map((_, i) => (
                 <div key={`e${i}`} />
               ))}
               {Array.from({ length: new Date(miniYm.y, miniYm.m + 1, 0).getDate() }).map((_, i) => {
