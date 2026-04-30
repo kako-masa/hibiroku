@@ -1,14 +1,14 @@
 import { useState, useRef } from 'react'
-import { C, SHIFTS, MOODS, WJ, WE, d2s, pad, save } from '../constants'
+import { C, SHIFTS, MOODS, WJ, WE, d2s, pad } from '../constants'
 
 const today = new Date()
 const todayS = d2s(today)
 
-// 指定日にその習慣が完了しているか
-function isHabitDone(task, rec, date) {
-  if (task.linkedTo === 'weight') return !!(rec[date]?.weight)
-  if (task.linkedTo === 'exercise') return !!(rec[date]?.exercise)
-  return !!(task.dailyDone?.[date])
+// 今日その習慣が完了しているか（DailyPage用）
+function isHabitDoneToday(task, rec) {
+  if (task.linkedTo === 'weight') return !!(rec[todayS]?.weight)
+  if (task.linkedTo === 'exercise') return !!(rec[todayS]?.exercise)
+  return !!(task.dailyDone?.[todayS])
 }
 
 export default function DailyPage({ state, actions }) {
@@ -26,11 +26,7 @@ export default function DailyPage({ state, actions }) {
   const [habitOpen, setHabitOpen] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hbr-habit-open') ?? 'true') } catch { return true }
   })
-  const [isListening, setIsListening] = useState(false)
-  const [pastOpen, setPastOpen] = useState(false)
   const noteRef = useRef(null)
-  const recognitionRef = useRef(null)
-  const voiceBaseRef = useRef('')
 
   const dateObj = new Date(date.replace(/-/g, '/'))
   const isToday = date === todayS
@@ -119,61 +115,19 @@ export default function DailyPage({ state, actions }) {
 
   const handleExNote = (e) => {
     const newRec = { ...rec, [date]: { ...rec[date], exNote: e.target.value } }
-    save('hbr-rec', newRec)
+    updateRec(newRec)
   }
 
-  const toggleVoice = () => {
-    if (isListening) {
-      recognitionRef.current?.stop()
-      return
-    }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) {
-      alert('このブラウザは音声認識に対応していません。\nChromeまたはEdgeをお使いください。')
-      return
-    }
-    const recognition = new SR()
-    recognition.lang = 'ja-JP'
-    recognition.continuous = true
-    recognition.interimResults = true
-    voiceBaseRef.current = noteInput
-    recognition.onresult = (e) => {
-      let interim = ''
-      let finalText = voiceBaseRef.current
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          finalText += e.results[i][0].transcript
-          voiceBaseRef.current = finalText
-        } else {
-          interim += e.results[i][0].transcript
-        }
-      }
-      setNoteInput(finalText + interim)
-    }
-    recognition.onend = () => {
-      setIsListening(false)
-      setNoteInput(voiceBaseRef.current)
-      if (noteRef.current) noteRef.current.focus()
-    }
-    recognition.onerror = (e) => {
-      if (e.error !== 'aborted') console.warn('音声認識エラー:', e.error)
-      setIsListening(false)
-    }
-    recognitionRef.current = recognition
-    recognition.start()
-    setIsListening(true)
-  }
-
-  // ハビットトラッカー：選択中の日付のチェックをgoalsに反映
-  const toggleHabitForDate = (goalId, taskId) => {
+  // ハビットトラッカー：今日のチェックをgoalsに反映
+  const toggleHabitToday = (goalId, taskId) => {
     const updated = (goals || []).map(g => {
       if (g.id !== goalId) return g
       return {
         ...g,
         habitTasks: (g.habitTasks || []).map(t => {
           if (t.id !== taskId) return t
-          const prev = t.dailyDone?.[date]
-          return { ...t, dailyDone: { ...(t.dailyDone || {}), [date]: !prev } }
+          const prev = t.dailyDone?.[todayS]
+          return { ...t, dailyDone: { ...(t.dailyDone || {}), [todayS]: !prev } }
         })
       }
     })
@@ -202,22 +156,7 @@ export default function DailyPage({ state, actions }) {
     }))
 
   const totalHabits = habitGroups.reduce((s, g) => s + g.tasks.length, 0)
-  const doneHabits = habitGroups.reduce((s, g) => s + g.tasks.filter(t => isHabitDone(t, rec, date)).length, 0)
-
-  // 過去の同じ日（1〜3年前）の記録
-  const pastDays = [1, 2, 3].map(yearsAgo => {
-    const [y, mo, d] = date.split('-').map(Number)
-    const pastYear = y - yearsAgo
-    const pastDate = `${pastYear}-${pad(mo)}-${pad(d)}`
-    // うるう年考慮：2/29 → 非うるう年はスキップ
-    const testDate = new Date(`${pastYear}/${pad(mo)}/${pad(d)}`)
-    if (isNaN(testDate.getTime()) || testDate.getDate() !== d) return null
-    const pr = rec[pastDate]
-    if (!pr) return null
-    const hasContent = pr.notes?.length || pr.note || pr.mood !== undefined || pr.shift || pr.weight || pr.exercise
-    if (!hasContent) return null
-    return { yearsAgo, pastDate, pastYear, pr, shiftData: pr.shift ? SHIFTS[pr.shift] : null }
-  }).filter(Boolean)
+  const doneHabits = habitGroups.reduce((s, g) => s + g.tasks.filter(t => isHabitDoneToday(t, rec)).length, 0)
 
   const fetchAI = async () => {
     setAiLoading(true)
@@ -387,7 +326,7 @@ export default function DailyPage({ state, actions }) {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: C.leather }}>
-                  {isToday ? '今日のハビット' : `${dateObj.getMonth()+1}/${dateObj.getDate()} のハビット`}
+                  今日のハビット
                 </span>
                 {/* ミニ進捗バー */}
                 <div style={{ width: 60, height: 4, background: '#EDE7DC', borderRadius: 2, overflow: 'hidden' }}>
@@ -422,7 +361,7 @@ export default function DailyPage({ state, actions }) {
                       {group.goalTitle}
                     </div>
                     {group.tasks.map(task => {
-                      const done = isHabitDone(task, rec, date)
+                      const done = isHabitDoneToday(task, rec)
                       const isLinked = !!task.linkedTo
                       return (
                         <div
@@ -439,7 +378,7 @@ export default function DailyPage({ state, actions }) {
                             type="checkbox"
                             checked={done}
                             disabled={isLinked}
-                            onChange={() => !isLinked && toggleHabitForDate(group.goalId, task.id)}
+                            onChange={() => !isLinked && toggleHabitToday(group.goalId, task.id)}
                             style={{
                               accentColor: C.leather,
                               width: 17,
@@ -600,7 +539,7 @@ export default function DailyPage({ state, actions }) {
           <div className="note-input-wrap">
             <textarea
               ref={noteRef}
-              className={`note-area${isListening ? ' note-area-listening' : ''}`}
+              className="note-area"
               rows="3"
               placeholder="今日のこと、気になったこと、感じたこと…"
               value={noteInput}
@@ -609,23 +548,13 @@ export default function DailyPage({ state, actions }) {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addNote() }
               }}
             />
-            <div className="note-btn-row">
-              <button
-                className={`mic-btn${isListening ? ' mic-listening' : ''}`}
-                onClick={toggleVoice}
-                title={isListening ? '録音を停止' : '音声入力'}
-                type="button"
-              >
-                {isListening ? '⏹' : '🎤'}
-              </button>
-              <button
-                className="note-add-btn"
-                onClick={addNote}
-                disabled={!noteInput.trim()}
-              >
-                保存
-              </button>
-            </div>
+            <button
+              className="note-add-btn"
+              onClick={addNote}
+              disabled={!noteInput.trim()}
+            >
+              保存
+            </button>
           </div>
           {r.note && !(r.notes?.length) && (
             <div className="note-legacy">
@@ -668,111 +597,6 @@ export default function DailyPage({ state, actions }) {
             </div>
           ))}
         </div>
-
-        {/* 過去の同じ日 */}
-        {pastDays.length > 0 && (
-          <div style={{
-            border: '1px solid rgba(107,79,58,0.15)',
-            borderRadius: 6,
-            marginBottom: 16,
-            overflow: 'hidden',
-            background: '#FAF8F5',
-          }}>
-            <button
-              onClick={() => setPastOpen(v => !v)}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '9px 12px',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: '#A08878' }}>
-                過去の同じ日 ({pastDays.length}件)
-              </span>
-              <span style={{ fontSize: 9, color: '#B09888' }}>{pastOpen ? '▲' : '▼'}</span>
-            </button>
-
-            {pastOpen && (
-              <div style={{ padding: '0 12px 12px' }}>
-                {pastDays.map(({ yearsAgo, pastDate, pastYear, pr, shiftData }, idx) => {
-                  const moodStr = pr.mood !== undefined ? MOODS[pr.mood] : null
-                  const moodEmoji = moodStr ? moodStr.split(' ')[0] : null
-                  const notesList = pr.notes?.length ? pr.notes : pr.note ? [{ id: 'legacy', time: null, text: pr.note }] : []
-                  return (
-                    <div
-                      key={pastDate}
-                      style={{
-                        marginTop: idx === 0 ? 2 : 12,
-                        paddingTop: idx === 0 ? 0 : 12,
-                        borderTop: idx === 0 ? 'none' : '1px solid rgba(180,162,140,0.2)',
-                      }}
-                    >
-                      {/* 年ヘッダー */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
-                        <span style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          color: '#A08878',
-                          letterSpacing: 0.5,
-                        }}>
-                          {yearsAgo}年前 — {pastYear}年
-                        </span>
-                        {shiftData && (
-                          <span style={{
-                            fontSize: 9,
-                            background: shiftData.bg,
-                            color: shiftData.c,
-                            border: `1px solid ${shiftData.c}`,
-                            borderRadius: 3,
-                            padding: '1px 6px',
-                            fontWeight: 600,
-                          }}>
-                            {shiftData.m} {shiftData.l}
-                          </span>
-                        )}
-                        {moodEmoji && (
-                          <span style={{ fontSize: 14, opacity: 0.75 }}>{moodEmoji}</span>
-                        )}
-                      </div>
-                      {/* メモ */}
-                      {notesList.length > 0 ? (
-                        notesList.map((n, ni) => (
-                          <div key={n.id || ni} style={{
-                            display: 'flex',
-                            gap: 8,
-                            marginBottom: 4,
-                            alignItems: 'flex-start',
-                          }}>
-                            {n.time && (
-                              <span style={{ fontSize: 10, color: '#B8A898', flexShrink: 0, paddingTop: 2 }}>
-                                {n.time}
-                              </span>
-                            )}
-                            <span style={{
-                              fontSize: 13,
-                              color: '#6A5A52',
-                              lineHeight: 1.7,
-                              flex: 1,
-                            }}>
-                              {n.text}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <span style={{ fontSize: 12, color: '#B8A898' }}>メモなし</span>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* AI アドバイス */}
         <div>
