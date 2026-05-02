@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { C, d2s } from '../constants'
+import { ReviewSection } from './ReviewSection'
 
 const todayS = d2s(new Date())
 
@@ -325,6 +326,9 @@ function GoalCard({ goal, rec, onUpdate, onDelete }) {
               </button>
             )}
           </div>
+
+          {/* 振り返りセクション */}
+          <ReviewSection goal={goal} rec={rec} onUpdate={onUpdate} />
 
           <button className="del-btn" style={{ marginTop: 4 }} onClick={() => onDelete(goal.id)}>
             この目標を削除
