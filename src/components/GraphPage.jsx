@@ -5,10 +5,11 @@ const today = new Date()
 const MOOD_EMOJIS = ['😊', '🙂', '😐', '😟', '😢']
 
 const GRAPH_TABS = [
-  { k: 'weight', l: '体重',   color: C.leather },
-  { k: 'fat',    l: '体脂肪', color: C.mauve   },
-  { k: 'sleep',  l: '睡眠',   color: C.slate   },
-  { k: 'mood',   l: '気分',   color: C.gold    },
+  { k: 'weight',       l: '体重',       color: C.leather },
+  { k: 'weight-fat',   l: '体重+体脂肪', color: C.leather },
+  { k: 'weight-sleep', l: '体重+睡眠',   color: C.leather },
+  { k: 'sleep',        l: '睡眠',        color: C.slate   },
+  { k: 'mood',         l: '気分',        color: C.gold    },
 ]
 
 function normSeries(vals) {
@@ -33,8 +34,8 @@ function lsGetNum(key) {
 
 export default function GraphPage({ state }) {
   const { rec, sh } = state
-  const [range, setRange]         = useState(7)
-  const [graphTab, setGraphTab]   = useState('weight')
+  const [range, setRange]           = useState(7)
+  const [graphTab, setGraphTab]     = useState('weight')
   const [goalWeight, setGoalWeight] = useState(() => lsGetNum('hbr-goal-weight'))
   const [goalFat,    setGoalFat]    = useState(() => lsGetNum('hbr-goal-fat'))
   const [gwInput,    setGwInput]    = useState(() => { const v = lsGetNum('hbr-goal-weight'); return v !== null ? String(v) : '' })
@@ -66,15 +67,28 @@ export default function GraphPage({ state }) {
   const latestFat    = latestVal(days.map(d => d.fat))
   const latestSleep  = latestVal(days.map(d => d.sleep))
 
-  // 現在タブのデータ
-  const tabCfg = {
-    weight: { vals: days.map(d => d.weight), goal: goalWeight, color: C.leather, unit: 'kg' },
-    fat:    { vals: days.map(d => d.fat),    goal: goalFat,    color: C.mauve,   unit: '%'  },
-    sleep:  { vals: days.map(d => d.sleep),  goal: null,       color: C.slate,   unit: 'h'  },
-    mood:   { vals: days.map(d => d.mood),   goal: null,       color: C.gold,    unit: ''   },
+  // タブごとの系列定義
+  const seriesDefs = {
+    weight: [
+      { vals: days.map(d => d.weight), goal: goalWeight, color: C.leather, unit: 'kg', side: 'left',  label: '体重' },
+    ],
+    'weight-fat': [
+      { vals: days.map(d => d.weight), goal: goalWeight, color: C.leather, unit: 'kg', side: 'left',  label: '体重' },
+      { vals: days.map(d => d.fat),    goal: goalFat,    color: C.mauve,   unit: '%',  side: 'right', label: '体脂肪' },
+    ],
+    'weight-sleep': [
+      { vals: days.map(d => d.weight), goal: goalWeight, color: C.leather, unit: 'kg', side: 'left',  label: '体重' },
+      { vals: days.map(d => d.sleep),  goal: null,       color: C.slate,   unit: 'h',  side: 'right', label: '睡眠' },
+    ],
+    sleep: [
+      { vals: days.map(d => d.sleep), goal: null, color: C.slate, unit: 'h', side: 'left', label: '睡眠' },
+    ],
+    mood: null,
   }
-  const cur = tabCfg[graphTab]
-  const norm = graphTab !== 'mood' ? normSeries(cur.vals) : null
+
+  const currentSeries = (seriesDefs[graphTab] || []).map(s => ({
+    ...s, nm: normSeries(s.vals),
+  }))
 
   // SVG 寸法
   const N     = days.length
@@ -85,11 +99,10 @@ export default function GraphPage({ state }) {
   const LINE_H  = 110
   const SVG_H   = DATE_H + SHIFT_H + LINE_H
 
-  const xc = i => i * DAY_W + DAY_W / 2
-
+  const xc     = i => i * DAY_W + DAY_W / 2
   const LINE_TOP = DATE_H + SHIFT_H + 6
   const LINE_BOT = DATE_H + SHIFT_H + LINE_H - 6
-  const yLine = v => LINE_BOT - v * (LINE_BOT - LINE_TOP)
+  const yLine  = v => LINE_BOT - v * (LINE_BOT - LINE_TOP)
 
   function buildSegments(nm) {
     if (!nm) return []
@@ -97,40 +110,34 @@ export default function GraphPage({ state }) {
     let buf = []
     days.forEach((_, i) => {
       const v = nm.norm[i]
-      if (v !== null) {
-        buf.push(`${xc(i)},${yLine(v)}`)
-      } else {
-        if (buf.length) { segs.push(buf); buf = [] }
-      }
+      if (v !== null) { buf.push(`${xc(i)},${yLine(v)}`) }
+      else { if (buf.length) { segs.push(buf); buf = [] } }
     })
     if (buf.length) segs.push(buf)
     return segs
   }
 
-  // 目標線のY座標（データ範囲でクランプ）
   function getTargetY(goal, nm) {
     if (goal === null || nm === null) return null
     const normalized = (goal - nm.min) / (nm.max - nm.min || 1)
     return yLine(Math.max(0, Math.min(1, normalized)))
   }
 
-  const targetY = (graphTab === 'weight' || graphTab === 'fat')
-    ? getTargetY(cur.goal, norm)
-    : null
-
-  const segs = buildSegments(norm)
-
-  function saveGoal(tab, raw) {
+  function saveGoal(key, raw) {
     const n = parseFloat(raw)
-    const key = tab === 'weight' ? 'hbr-goal-weight' : 'hbr-goal-fat'
+    const lsKey = key === 'weight' ? 'hbr-goal-weight' : 'hbr-goal-fat'
     if (!isNaN(n) && raw.trim() !== '') {
-      localStorage.setItem(key, String(n))
-      tab === 'weight' ? setGoalWeight(n) : setGoalFat(n)
+      localStorage.setItem(lsKey, String(n))
+      key === 'weight' ? setGoalWeight(n) : setGoalFat(n)
     } else {
-      localStorage.removeItem(key)
-      tab === 'weight' ? setGoalWeight(null) : setGoalFat(null)
+      localStorage.removeItem(lsKey)
+      key === 'weight' ? setGoalWeight(null) : setGoalFat(null)
     }
   }
+
+  const showGoalWeight = ['weight', 'weight-fat', 'weight-sleep'].includes(graphTab)
+  const showGoalFat    = graphTab === 'weight-fat'
+  const isDual         = currentSeries.length === 2
 
   return (
     <>
@@ -170,22 +177,47 @@ export default function GraphPage({ state }) {
         ))}
       </div>
 
-      {/* 目標値入力（体重・体脂肪タブのみ） */}
-      {(graphTab === 'weight' || graphTab === 'fat') && (
-        <div className="graph-goal-row">
-          <span className="graph-goal-label">
-            目標{graphTab === 'weight' ? '体重' : '体脂肪'}
-          </span>
-          <input
-            className="graph-goal-input"
-            type="number"
-            step="0.1"
-            placeholder={graphTab === 'weight' ? '例: 55.0' : '例: 22.0'}
-            value={graphTab === 'weight' ? gwInput : gfInput}
-            onChange={e => graphTab === 'weight' ? setGwInput(e.target.value) : setGfInput(e.target.value)}
-            onBlur={e => saveGoal(graphTab, e.target.value)}
-          />
-          <span className="graph-goal-unit">{graphTab === 'weight' ? 'kg' : '%'}</span>
+      {/* 目標値入力 */}
+      {(showGoalWeight || showGoalFat) && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          {showGoalWeight && (
+            <div className="graph-goal-row" style={{ flex: 1, marginBottom: 0 }}>
+              <span className="graph-goal-label" style={{ color: C.leather }}>目標体重</span>
+              <input
+                className="graph-goal-input"
+                type="number" step="0.1" placeholder="55.0"
+                value={gwInput}
+                onChange={e => setGwInput(e.target.value)}
+                onBlur={e => saveGoal('weight', e.target.value)}
+              />
+              <span className="graph-goal-unit">kg</span>
+            </div>
+          )}
+          {showGoalFat && (
+            <div className="graph-goal-row" style={{ flex: 1, marginBottom: 0 }}>
+              <span className="graph-goal-label" style={{ color: C.mauve }}>目標体脂肪</span>
+              <input
+                className="graph-goal-input"
+                type="number" step="0.1" placeholder="22.0"
+                value={gfInput}
+                onChange={e => setGfInput(e.target.value)}
+                onBlur={e => saveGoal('fat', e.target.value)}
+              />
+              <span className="graph-goal-unit">%</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 凡例（デュアル系列のみ） */}
+      {isDual && (
+        <div style={{ display: 'flex', gap: 12, marginBottom: 8, paddingLeft: 2 }}>
+          {currentSeries.map(s => (
+            <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 20, height: 2.5, background: s.color, borderRadius: 2 }} />
+              <span style={{ fontSize: 10, color: s.color }}>{s.label} ({s.unit})</span>
+            </div>
+          ))}
         </div>
       )}
 
@@ -210,7 +242,7 @@ export default function GraphPage({ state }) {
           })}
         </div>
       ) : (
-        /* ── 折れ線グラフタブ ── */
+        /* ── 折れ線グラフ ── */
         <div className="graph-scroll">
           <svg width={SVG_W} height={SVG_H} viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ display: 'block' }}>
             <defs>
@@ -224,8 +256,6 @@ export default function GraphPage({ state }) {
               <line key={v} x1={0} y1={yLine(v)} x2={SVG_W} y2={yLine(v)}
                 stroke="rgba(180,162,140,0.15)" strokeWidth="1" strokeDasharray="3 3" />
             ))}
-
-            {/* セクション境界線 */}
             <line x1={0} y1={DATE_H + SHIFT_H} x2={SVG_W} y2={DATE_H + SHIFT_H}
               stroke="rgba(180,162,140,0.25)" strokeWidth="1" />
 
@@ -263,39 +293,56 @@ export default function GraphPage({ state }) {
 
             {/* チャートエリア内の描画（clipPath適用） */}
             <g clipPath="url(#line-clip)">
-              {/* 目標線（体重・体脂肪のみ） */}
-              {targetY !== null && (
-                <line x1={0} y1={targetY} x2={SVG_W} y2={targetY}
-                  stroke={cur.color} strokeWidth="1.5" strokeDasharray="6 4" opacity="0.55" />
-              )}
-
-              {/* 折れ線 */}
-              {segs.map((pts, si) => (
-                pts.length >= 2 && (
-                  <polyline key={si} points={pts.join(' ')}
-                    fill="none" stroke={cur.color}
-                    strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-                )
-              ))}
-
-              {/* データ点 */}
-              {norm && days.map((_, i) => {
-                const v = norm.norm[i]
-                if (v === null) return null
+              {currentSeries.map((s, si) => {
+                const segs    = buildSegments(s.nm)
+                const targetY = getTargetY(s.goal, s.nm)
                 return (
-                  <circle key={i} cx={xc(i)} cy={yLine(v)} r="2.5"
-                    fill={cur.color} stroke="#FAF7F2" strokeWidth="1.2" />
+                  <g key={si}>
+                    {/* 目標点線 */}
+                    {targetY !== null && (
+                      <line x1={0} y1={targetY} x2={SVG_W} y2={targetY}
+                        stroke={s.color} strokeWidth="1.5" strokeDasharray="6 4" opacity="0.55" />
+                    )}
+                    {/* 折れ線 */}
+                    {segs.map((pts, pi) => pts.length >= 2 && (
+                      <polyline key={pi} points={pts.join(' ')}
+                        fill="none" stroke={s.color}
+                        strokeWidth={si === 0 ? 2 : 1.5}
+                        strokeLinejoin="round" strokeLinecap="round"
+                        strokeDasharray={si === 1 ? '1 0' : undefined}
+                      />
+                    ))}
+                    {/* データ点 */}
+                    {s.nm && days.map((_, i) => {
+                      const v = s.nm.norm[i]
+                      if (v === null) return null
+                      return (
+                        <circle key={i} cx={xc(i)} cy={yLine(v)} r={si === 0 ? 2.5 : 2}
+                          fill={s.color} stroke="#FAF7F2" strokeWidth="1.2" />
+                      )
+                    })}
+                  </g>
                 )
               })}
             </g>
 
-            {/* 軸ラベル（最大・最小値） */}
-            {norm && (
-              <>
-                <text x={4} y={LINE_TOP + 8} fontSize="7" fill={C.inkL}>{norm.max}</text>
-                <text x={4} y={LINE_BOT}     fontSize="7" fill={C.inkL}>{norm.min}</text>
-              </>
-            )}
+            {/* 軸ラベル（各系列のmin/max、左右に分けて表示） */}
+            {currentSeries.map((s, si) => {
+              if (!s.nm) return null
+              const isRight  = s.side === 'right'
+              const xPos     = isRight ? SVG_W - 4 : 4
+              const anchor   = isRight ? 'end' : 'start'
+              return (
+                <g key={si}>
+                  <text x={xPos} y={LINE_TOP + 8} textAnchor={anchor} fontSize="7" fill={s.color}>
+                    {s.nm.max}{s.unit}
+                  </text>
+                  <text x={xPos} y={LINE_BOT} textAnchor={anchor} fontSize="7" fill={s.color}>
+                    {s.nm.min}{s.unit}
+                  </text>
+                </g>
+              )
+            })}
           </svg>
         </div>
       )}

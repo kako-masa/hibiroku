@@ -906,15 +906,16 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 }
 .graph-tab-btn {
   flex: 1;
-  padding: 7px 4px;
+  padding: 6px 2px;
   border: 1px solid rgba(180,162,140,0.4);
   border-radius: 4px;
   background: transparent;
   color: #5C4A3E;
-  font-size: 12px;
+  font-size: 10px;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .graph-range-btns {
   display: flex;
