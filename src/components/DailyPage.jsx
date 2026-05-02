@@ -4,11 +4,11 @@ import { C, SHIFTS, MOODS, WJ, WE, d2s, pad } from '../constants'
 const today = new Date()
 const todayS = d2s(today)
 
-// 今日その習慣が完了しているか（DailyPage用）
-function isHabitDoneToday(task, rec) {
-  if (task.linkedTo === 'weight') return !!(rec[todayS]?.weight)
-  if (task.linkedTo === 'exercise') return !!(rec[todayS]?.exercise)
-  return !!(task.dailyDone?.[todayS])
+// 指定日付にその習慣が完了しているか（DailyPage用）
+function isHabitDone(task, rec, date) {
+  if (task.linkedTo === 'weight') return !!(rec[date]?.weight)
+  if (task.linkedTo === 'exercise') return !!(rec[date]?.exercise)
+  return !!(task.dailyDone?.[date])
 }
 
 export default function DailyPage({ state, actions }) {
@@ -118,7 +118,7 @@ export default function DailyPage({ state, actions }) {
     updateRec(newRec)
   }
 
-  // ハビットトラッカー：今日のチェックをgoalsに反映
+  // ハビットトラッカー：選択日付のチェックをgoalsに反映
   const toggleHabitToday = (goalId, taskId) => {
     const updated = (goals || []).map(g => {
       if (g.id !== goalId) return g
@@ -126,8 +126,8 @@ export default function DailyPage({ state, actions }) {
         ...g,
         habitTasks: (g.habitTasks || []).map(t => {
           if (t.id !== taskId) return t
-          const prev = t.dailyDone?.[todayS]
-          return { ...t, dailyDone: { ...(t.dailyDone || {}), [todayS]: !prev } }
+          const prev = t.dailyDone?.[date]
+          return { ...t, dailyDone: { ...(t.dailyDone || {}), [date]: !prev } }
         })
       }
     })
@@ -156,7 +156,7 @@ export default function DailyPage({ state, actions }) {
     }))
 
   const totalHabits = habitGroups.reduce((s, g) => s + g.tasks.length, 0)
-  const doneHabits = habitGroups.reduce((s, g) => s + g.tasks.filter(t => isHabitDoneToday(t, rec)).length, 0)
+  const doneHabits = habitGroups.reduce((s, g) => s + g.tasks.filter(t => isHabitDone(t, rec, date)).length, 0)
 
   const fetchAI = async () => {
     setAiLoading(true)
@@ -361,7 +361,7 @@ export default function DailyPage({ state, actions }) {
                       {group.goalTitle}
                     </div>
                     {group.tasks.map(task => {
-                      const done = isHabitDoneToday(task, rec)
+                      const done = isHabitDone(task, rec, date)
                       const isLinked = !!task.linkedTo
                       return (
                         <div
