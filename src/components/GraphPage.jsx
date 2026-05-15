@@ -106,15 +106,12 @@ export default function GraphPage({ state }) {
 
   function buildSegments(nm) {
     if (!nm) return []
-    const segs = []
-    let buf = []
+    const pts = []
     days.forEach((_, i) => {
       const v = nm.norm[i]
-      if (v !== null) { buf.push(`${xc(i)},${yLine(v)}`) }
-      else { if (buf.length) { segs.push(buf); buf = [] } }
+      if (v !== null) pts.push(`${xc(i)},${yLine(v)}`)
     })
-    if (buf.length) segs.push(buf)
-    return segs
+    return pts.length >= 2 ? [pts] : []
   }
 
   function getTargetY(goal, nm) {
