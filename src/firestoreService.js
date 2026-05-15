@@ -6,24 +6,26 @@ function dataDoc(uid, name) {
 }
 
 export async function loadAllData(uid) {
-  const [recSnap, shSnap, goalsSnap, learnSnap, settingsSnap] = await Promise.all([
+  const [recSnap, shSnap, goalsSnap, learnSnap, settingsSnap, weeklySnap] = await Promise.all([
     getDoc(dataDoc(uid, 'rec')),
     getDoc(dataDoc(uid, 'sh')),
     getDoc(dataDoc(uid, 'goals')),
     getDoc(dataDoc(uid, 'learn')),
     getDoc(dataDoc(uid, 'settings')),
+    getDoc(dataDoc(uid, 'weekly')),
   ])
   return {
-    rec:     recSnap.exists()      ? recSnap.data()              : {},
-    sh:      shSnap.exists()       ? shSnap.data()               : {},
-    goals:   goalsSnap.exists()    ? (goalsSnap.data().items ?? [])   : [],
-    learn:   learnSnap.exists()    ? (learnSnap.data().items ?? [])   : [],
+    rec:     recSnap.exists()      ? recSnap.data()                     : {},
+    sh:      shSnap.exists()       ? shSnap.data()                      : {},
+    goals:   goalsSnap.exists()    ? (goalsSnap.data().items ?? [])     : [],
+    learn:   learnSnap.exists()    ? (learnSnap.data().items ?? [])     : [],
     shTodos: settingsSnap.exists() ? (settingsSnap.data().shTodos ?? []) : [],
+    weekly:  weeklySnap.exists()   ? (weeklySnap.data().items ?? [])    : [],
   }
 }
 
 export async function saveToFirestore(uid, key, value) {
-  if (key === 'goals' || key === 'learn') {
+  if (key === 'goals' || key === 'learn' || key === 'weekly') {
     await setDoc(dataDoc(uid, key), { items: value })
   } else if (key === 'shTodos') {
     await setDoc(dataDoc(uid, 'settings'), { shTodos: value }, { merge: true })
@@ -42,6 +44,7 @@ export async function migrateFromLocalStorage(uid) {
   const goals   = lsGet('hbr-goals', [])
   const learn   = lsGet('hbr-learn', [])
   const shTodos = lsGet('hbr-sh-todos', [])
+  const weekly  = lsGet('hbr-weekly', [])
 
   await Promise.all([
     saveToFirestore(uid, 'rec',     rec),
@@ -49,5 +52,6 @@ export async function migrateFromLocalStorage(uid) {
     saveToFirestore(uid, 'goals',   goals),
     saveToFirestore(uid, 'learn',   learn),
     saveToFirestore(uid, 'shTodos', shTodos),
+    saveToFirestore(uid, 'weekly',  weekly),
   ])
 }

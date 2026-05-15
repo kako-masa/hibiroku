@@ -31,6 +31,7 @@ export default function App() {
   const [goals, setGoals] = useState(() => lsGet('hbr-goals', []))
   const [learn, setLearn] = useState(() => lsGet('hbr-learn', []))
   const [shTodos, setShTodos] = useState(() => lsGet('hbr-sh-todos', []))
+  const [weeklyReviews, setWeeklyReviews] = useState(() => lsGet('hbr-weekly', []))
 
   // Firebase auth
   const [user, setUser] = useState(null)
@@ -60,13 +61,13 @@ export default function App() {
               setSyncStatus('migrating')
               await migrateFromLocalStorage(u.uid)
               const d2 = await loadAllData(u.uid)
-              setRec(d2.rec);     setSh(d2.sh);    setGoals(d2.goals)
-              setLearn(d2.learn); setShTodos(d2.shTodos)
+              setRec(d2.rec);     setSh(d2.sh);         setGoals(d2.goals)
+              setLearn(d2.learn); setShTodos(d2.shTodos); setWeeklyReviews(d2.weekly)
               setMigrated(true)
             }
           } else {
-            setRec(data.rec);     setSh(data.sh);    setGoals(data.goals)
-            setLearn(data.learn); setShTodos(data.shTodos)
+            setRec(data.rec);     setSh(data.sh);         setGoals(data.goals)
+            setLearn(data.learn); setShTodos(data.shTodos); setWeeklyReviews(data.weekly)
           }
           setSyncStatus('synced')
         } catch (err) {
@@ -122,8 +123,12 @@ export default function App() {
     setShTodos(v); lsSave('hbr-sh-todos', v); fsSave('shTodos', v)
   }, [fsSave])
 
-  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn, shTodos }
-  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn, updateShTodos }
+  const updateWeeklyReviews = useCallback((v) => {
+    setWeeklyReviews(v); lsSave('hbr-weekly', v); fsSave('weekly', v)
+  }, [fsSave])
+
+  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn, shTodos, weeklyReviews }
+  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn, updateShTodos, updateWeeklyReviews }
 
   const pages = { shift: ShiftPage, goal: GoalPage, history: HistoryPage, graph: GraphPage, learning: LearningPage }
   const PageComponent = pages[tab]

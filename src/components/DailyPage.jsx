@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { C, SHIFTS, MOODS, WJ, WE, d2s, pad, tagColor } from '../constants'
+import WeeklyReviewSection from './WeeklyReviewSection'
 
 const today = new Date()
 const todayS = d2s(today)
@@ -12,8 +13,8 @@ function isHabitDone(task, rec, date) {
 }
 
 export default function DailyPage({ state, actions }) {
-  const { date, rec, sh, learn, miniYm, goals } = state
-  const { setDate, setMiniYm, updateRec, updateLearn, updateGoals } = actions
+  const { date, rec, sh, learn, miniYm, goals, weeklyReviews } = state
+  const { setDate, setMiniYm, updateRec, updateLearn, updateGoals, updateWeeklyReviews } = actions
   const [calOpen, setCalOpen] = useState(false)
   const [shiftOpen, setShiftOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
@@ -744,6 +745,13 @@ export default function DailyPage({ state, actions }) {
             </div>
           )}
         </div>
+
+        {/* 週次振り返り */}
+        <WeeklyReviewSection
+          rec={rec}
+          weeklyReviews={weeklyReviews}
+          updateWeeklyReviews={updateWeeklyReviews}
+        />
       </div>
     </div>
   )
