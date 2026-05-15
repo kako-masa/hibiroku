@@ -95,9 +95,12 @@ export default function HistoryPage({ state, actions }) {
             const moodIdx = (r.mood !== undefined && r.mood !== null) ? r.mood : null
             const moodEmoji = moodIdx !== null ? MOOD_EMOJIS[moodIdx] : null
             const moodText  = moodIdx !== null ? MOODS[moodIdx]?.split(' ').slice(1).join(' ') : null
-            const notes = r.notes?.length
+            const allNotes = r.notes?.length
               ? r.notes
               : r.note ? [{ id: 'legacy', time: null, text: r.note }] : []
+            const notes = selectedTags.length === 0
+              ? allNotes
+              : allNotes.filter(n => selectedTags.some(st => (n.tags || []).includes(st)))
 
             return (
               <div key={ds} className="diary-day">
