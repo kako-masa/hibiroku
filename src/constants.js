@@ -63,3 +63,19 @@ export function save(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)) } catch {}
   }, 500)
 }
+
+// ── タグカラー ──
+export const TAG_COLORS = [
+  { bg: '#F5EDD8', text: '#6B4F3A', border: '#C4A882' },
+  { bg: '#E4EDE8', text: '#4A7060', border: '#8AB0A0' },
+  { bg: '#E4EAF0', text: '#4A5C6A', border: '#8AAABB' },
+  { bg: '#F0E8EE', text: '#7A5870', border: '#B898AA' },
+  { bg: '#F5E8E4', text: '#A06050', border: '#D09880' },
+  { bg: '#F0EDD8', text: '#806838', border: '#C0A870' },
+]
+
+export function tagColor(tag) {
+  let h = 0
+  for (let i = 0; i < tag.length; i++) h = (h * 31 + tag.charCodeAt(i)) & 0xffff
+  return TAG_COLORS[h % TAG_COLORS.length]
+}

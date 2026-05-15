@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { C, SHIFTS, MOODS, WJ, WE, d2s, pad } from '../constants'
+import { C, SHIFTS, MOODS, WJ, WE, d2s, pad, tagColor } from '../constants'
 
 const today = new Date()
 const todayS = d2s(today)
@@ -23,6 +23,8 @@ export default function DailyPage({ state, actions }) {
   const [noteInput, setNoteInput] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editText, setEditText] = useState('')
+  const [tagInputId, setTagInputId] = useState(null)
+  const [tagText,    setTagText]    = useState('')
   const [habitOpen, setHabitOpen] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hbr-habit-open') ?? 'true') } catch { return true }
   })
@@ -112,6 +114,35 @@ export default function DailyPage({ state, actions }) {
     const newRec = { ...rec, [date]: { ...rec[date], notes: existing.filter(n => n.id !== id) } }
     updateRec(newRec)
   }
+
+  const allUsedTags = (() => {
+    const counts = {}
+    Object.values(rec).forEach(rv => {
+      ;(rv.notes || []).forEach(n => {
+        ;(n.tags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1 })
+      })
+    })
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([t]) => t)
+  })()
+
+  const addTag = (noteId, tag) => {
+    const t = tag.trim()
+    if (!t) return
+    const newNotes = (r.notes || []).map(n =>
+      n.id !== noteId || (n.tags || []).includes(t) ? n : { ...n, tags: [...(n.tags || []), t] }
+    )
+    updateRec({ ...rec, [date]: { ...rec[date], notes: newNotes } })
+  }
+
+  const removeTag = (noteId, tag) => {
+    const newNotes = (r.notes || []).map(n =>
+      n.id !== noteId ? n : { ...n, tags: (n.tags || []).filter(t => t !== tag) }
+    )
+    updateRec({ ...rec, [date]: { ...rec[date], notes: newNotes } })
+  }
+
+  const openTagInput  = (id) => { setTagInputId(id); setTagText('') }
+  const closeTagInput = ()   => { setTagInputId(null); setTagText('') }
 
   const handleExNote = (e) => {
     const newRec = { ...rec, [date]: { ...rec[date], exNote: e.target.value } }
@@ -562,40 +593,104 @@ export default function DailyPage({ state, actions }) {
               <span className="note-entry-text">{r.note}</span>
             </div>
           )}
-          {(r.notes || []).map((n) => (
-            <div key={n.id} className="note-entry">
-              <div className="note-entry-header">
-                <span className="note-entry-time">{n.time}</span>
-                <div className="note-entry-actions">
-                  {editingId !== n.id && (
-                    <button className="note-edit-btn" onClick={() => startEdit(n)}>編集</button>
-                  )}
-                  <button className="note-del-btn" onClick={() => deleteNote(n.id)}>削除</button>
-                </div>
-              </div>
-              {editingId === n.id ? (
-                <div className="note-edit-wrap">
-                  <textarea
-                    className="note-area note-edit-area"
-                    rows="3"
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveEdit(n.id) }
-                      if (e.key === 'Escape') cancelEdit()
-                    }}
-                    autoFocus
-                  />
-                  <div className="note-edit-btns">
-                    <button className="note-edit-cancel-btn" onClick={cancelEdit}>キャンセル</button>
-                    <button className="note-add-btn" onClick={() => saveEdit(n.id)} disabled={!editText.trim()}>保存</button>
+          {(r.notes || []).map((n) => {
+            const suggestions = allUsedTags
+              .filter(t => !(n.tags || []).includes(t))
+              .filter(t => tagText === '' || t.includes(tagText))
+              .slice(0, 8)
+            return (
+              <div key={n.id} className="note-entry">
+                <div className="note-entry-header">
+                  <span className="note-entry-time">{n.time}</span>
+                  <div className="note-entry-actions">
+                    {editingId !== n.id && (
+                      <button className="note-edit-btn" onClick={() => startEdit(n)}>編集</button>
+                    )}
+                    <button className="note-del-btn" onClick={() => deleteNote(n.id)}>削除</button>
                   </div>
                 </div>
-              ) : (
-                <div className="note-entry-text">{n.text}</div>
-              )}
-            </div>
-          ))}
+                {editingId === n.id ? (
+                  <div className="note-edit-wrap">
+                    <textarea
+                      className="note-area note-edit-area"
+                      rows="3"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveEdit(n.id) }
+                        if (e.key === 'Escape') cancelEdit()
+                      }}
+                      autoFocus
+                    />
+                    <div className="note-edit-btns">
+                      <button className="note-edit-cancel-btn" onClick={cancelEdit}>キャンセル</button>
+                      <button className="note-add-btn" onClick={() => saveEdit(n.id)} disabled={!editText.trim()}>保存</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="note-entry-text">{n.text}</div>
+                    <div className="note-tags-row">
+                      {(n.tags || []).map(tag => {
+                        const tc = tagColor(tag)
+                        return (
+                          <span key={tag} className="note-tag-chip"
+                            style={{ background: tc.bg, color: tc.text, border: `1px solid ${tc.border}` }}>
+                            {tag}
+                            <button
+                              className="note-tag-remove"
+                              onClick={(e) => { e.stopPropagation(); removeTag(n.id, tag) }}
+                            >×</button>
+                          </span>
+                        )
+                      })}
+                      {tagInputId !== n.id && (
+                        <button className="note-tag-add-btn" onClick={() => openTagInput(n.id)}>+ タグ</button>
+                      )}
+                    </div>
+                    {tagInputId === n.id && (
+                      <div className="note-tag-input-wrap">
+                        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                          <input
+                            autoFocus
+                            className="note-tag-input"
+                            value={tagText}
+                            onChange={e => setTagText(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' && tagText.trim()) { addTag(n.id, tagText); setTagText('') }
+                              if (e.key === 'Escape') closeTagInput()
+                            }}
+                            placeholder="タグ名を入力…"
+                          />
+                          <button
+                            className="note-add-btn"
+                            onClick={() => { if (tagText.trim()) { addTag(n.id, tagText); setTagText('') } }}
+                            disabled={!tagText.trim()}
+                          >追加</button>
+                          <button className="note-edit-cancel-btn" style={{ padding: '6px 8px' }} onClick={closeTagInput}>✕</button>
+                        </div>
+                        {suggestions.length > 0 && (
+                          <div className="note-tag-suggestions">
+                            {suggestions.map(t => {
+                              const tc = tagColor(t)
+                              return (
+                                <button
+                                  key={t}
+                                  className="note-tag-suggestion"
+                                  style={{ background: tc.bg, color: tc.text, border: `1px solid ${tc.border}` }}
+                                  onClick={() => { addTag(n.id, t); setTagText('') }}
+                                >{t}</button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         {/* AI アドバイス */}
