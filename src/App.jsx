@@ -32,6 +32,7 @@ export default function App() {
   const [learn, setLearn] = useState(() => lsGet('hbr-learn', []))
   const [shTodos, setShTodos] = useState(() => lsGet('hbr-sh-todos', []))
   const [weeklyReviews, setWeeklyReviews] = useState(() => lsGet('hbr-weekly', []))
+  const [historySubTab, setHistorySubTab] = useState('diary')
 
   // Firebase auth
   const [user, setUser] = useState(null)
@@ -127,8 +128,8 @@ export default function App() {
     setWeeklyReviews(v); lsSave('hbr-weekly', v); fsSave('weekly', v)
   }, [fsSave])
 
-  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn, shTodos, weeklyReviews }
-  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn, updateShTodos, updateWeeklyReviews }
+  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn, shTodos, weeklyReviews, historySubTab }
+  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn, updateShTodos, updateWeeklyReviews, setHistorySubTab }
 
   const pages = { shift: ShiftPage, goal: GoalPage, history: HistoryPage, graph: GraphPage, learning: LearningPage }
   const PageComponent = pages[tab]

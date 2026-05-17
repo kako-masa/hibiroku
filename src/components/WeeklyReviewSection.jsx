@@ -2,19 +2,24 @@ import { useState } from 'react'
 import { C, MOODS, d2s } from '../constants'
 
 const today = new Date()
+const todayS = d2s(today)
 const MOOD_EMOJIS = ['😊', '🙂', '😐', '😟', '😢']
+
+function getWeekOf(ds) {
+  const d = new Date(ds.replace(/-/g, '/'))
+  const dow = d.getDay()
+  const daysSinceMon = dow === 0 ? 6 : dow - 1
+  const mon = new Date(d)
+  mon.setDate(d.getDate() - daysSinceMon)
+  const sun = new Date(mon)
+  sun.setDate(mon.getDate() + 6)
+  return { start: d2s(mon), end: d2s(sun) }
+}
 
 function getLastWeek() {
   const d = new Date(today)
-  const dow = d.getDay()
-  const daysSinceMon = dow === 0 ? 6 : dow - 1
-  const thisMon = new Date(d)
-  thisMon.setDate(d.getDate() - daysSinceMon)
-  const lastMon = new Date(thisMon)
-  lastMon.setDate(thisMon.getDate() - 7)
-  const lastSun = new Date(thisMon)
-  lastSun.setDate(thisMon.getDate() - 1)
-  return { start: d2s(lastMon), end: d2s(lastSun) }
+  d.setDate(d.getDate() - 7)
+  return getWeekOf(d2s(d))
 }
 
 function computeStats(rec, weekStart, weekEnd) {
@@ -39,13 +44,39 @@ function computeStats(rec, weekStart, weekEnd) {
 function formatWeek(start, end) {
   const s = new Date(start.replace(/-/g, '/'))
   const e = new Date(end.replace(/-/g, '/'))
-  return `${s.getMonth() + 1}/${s.getDate()}（月）〜 ${e.getMonth() + 1}/${e.getDate()}（日）`
+  return `${s.getMonth() + 1}/${s.getDate()}〜${e.getMonth() + 1}/${e.getDate()}`
 }
 
 function MoodVal({ avg }) {
-  if (avg === null) return <span style={{ color: C.inkL }}>—</span>
+  if (avg === null || avg === undefined) return <span style={{ color: C.inkL }}>—</span>
   const idx = Math.min(4, Math.round(avg))
   return <span>{MOOD_EMOJIS[idx]} {avg.toFixed(1)}</span>
+}
+
+function StatsRow({ stats, style }) {
+  return (
+    <div className="weekly-stats-row" style={style}>
+      <div className="weekly-stat">
+        <div className="weekly-stat-label">気分平均</div>
+        <div className="weekly-stat-val"><MoodVal avg={stats?.avgMood ?? null} /></div>
+      </div>
+      <div className="weekly-stat">
+        <div className="weekly-stat-label">運動</div>
+        <div className="weekly-stat-val">{stats?.exerciseDays ?? 0}日</div>
+      </div>
+      <div className="weekly-stat">
+        <div className="weekly-stat-label">体重変化</div>
+        <div className="weekly-stat-val">
+          {stats?.weightChange != null
+            ? <span style={{ color: stats.weightChange <= 0 ? C.sage : C.rose }}>
+                {stats.weightChange >= 0 ? '+' : ''}{stats.weightChange}kg
+              </span>
+            : <span style={{ color: C.inkL }}>—</span>
+          }
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function WeeklyReviewSection({ rec, weeklyReviews, updateWeeklyReviews }) {
@@ -54,11 +85,19 @@ export default function WeeklyReviewSection({ rec, weeklyReviews, updateWeeklyRe
   const existing = weeklyReviews.find(r => r.weekStart === lastWeek.start)
   const stats = computeStats(rec, lastWeek.start, lastWeek.end)
 
-  const [formOpen, setFormOpen]     = useState(false)
-  const [formText, setFormText]     = useState('')
-  const [formGood, setFormGood]     = useState('')
+  const [formOpen, setFormOpen]       = useState(false)
+  const [formText, setFormText]       = useState('')
+  const [formGood, setFormGood]       = useState('')
   const [formReflect, setFormReflect] = useState('')
-  const [histOpen, setHistOpen]     = useState(false)
+  const [openPast, setOpenPast]       = useState(new Set())
+
+  const togglePast = (weekStart) => {
+    setOpenPast(prev => {
+      const next = new Set(prev)
+      next.has(weekStart) ? next.delete(weekStart) : next.add(weekStart)
+      return next
+    })
+  }
 
   const openForm = () => {
     setFormText(existing?.text || '')
@@ -103,30 +142,8 @@ export default function WeeklyReviewSection({ rec, weeklyReviews, updateWeeklyRe
           )}
         </div>
 
-        {/* 自動集計 */}
-        <div className="weekly-stats-row">
-          <div className="weekly-stat">
-            <div className="weekly-stat-label">気分平均</div>
-            <div className="weekly-stat-val"><MoodVal avg={stats.avgMood} /></div>
-          </div>
-          <div className="weekly-stat">
-            <div className="weekly-stat-label">運動</div>
-            <div className="weekly-stat-val">{stats.exerciseDays}日</div>
-          </div>
-          <div className="weekly-stat">
-            <div className="weekly-stat-label">体重変化</div>
-            <div className="weekly-stat-val">
-              {stats.weightChange !== null
-                ? <span style={{ color: stats.weightChange <= 0 ? C.sage : C.rose }}>
-                    {stats.weightChange >= 0 ? '+' : ''}{stats.weightChange}kg
-                  </span>
-                : <span style={{ color: C.inkL }}>—</span>
-              }
-            </div>
-          </div>
-        </div>
+        <StatsRow stats={stats} />
 
-        {/* フォーム / 既存レビュー / 書くボタン */}
         {formOpen ? (
           <div className="weekly-form">
             <div className="weekly-form-label">今週はどんな週でしたか？</div>
@@ -183,55 +200,42 @@ export default function WeeklyReviewSection({ rec, weeklyReviews, updateWeeklyRe
         )}
       </div>
 
-      {/* 過去の振り返り一覧 */}
+      {/* 過去の振り返り（個別折りたたみ）*/}
       {pastReviews.length > 0 && (
-        <>
-          <button className="weekly-hist-toggle" onClick={() => setHistOpen(v => !v)}>
-            過去の振り返り {histOpen ? '▲' : '▼'}
-          </button>
-          {histOpen && (
-            <div className="weekly-hist-list">
-              {pastReviews.map(r => (
-                <div key={r.id} className="weekly-hist-item">
-                  <div className="weekly-hist-range">{formatWeek(r.weekStart, r.weekEnd)}</div>
-                  <div className="weekly-stats-row" style={{ marginBottom: 8 }}>
-                    <div className="weekly-stat">
-                      <div className="weekly-stat-label">気分平均</div>
-                      <div className="weekly-stat-val">
-                        <MoodVal avg={r.stats?.avgMood ?? null} />
+        <div style={{ marginTop: 8 }}>
+          {pastReviews.map(r => {
+            const isOpen = openPast.has(r.weekStart)
+            return (
+              <div key={r.weekStart} className="weekly-past-card">
+                <button className="weekly-past-header" onClick={() => togglePast(r.weekStart)}>
+                  <span className="weekly-week-range">{formatWeek(r.weekStart, r.weekEnd)}</span>
+                  <span className="weekly-past-arrow">{isOpen ? '▲' : '▼'}</span>
+                </button>
+                {isOpen && (
+                  <div className="weekly-past-body">
+                    <StatsRow stats={r.stats} style={{ marginBottom: 8 }} />
+                    {r.text && <p className="weekly-review-text">{r.text}</p>}
+                    {r.good && (
+                      <div className="weekly-review-item">
+                        <span className="weekly-review-item-label">✓ よかったこと</span>
+                        <p className="weekly-review-text">{r.good}</p>
                       </div>
-                    </div>
-                    <div className="weekly-stat">
-                      <div className="weekly-stat-label">運動</div>
-                      <div className="weekly-stat-val">{r.stats?.exerciseDays ?? 0}日</div>
-                    </div>
-                    <div className="weekly-stat">
-                      <div className="weekly-stat-label">体重変化</div>
-                      <div className="weekly-stat-val">
-                        {r.stats?.weightChange != null
-                          ? `${r.stats.weightChange >= 0 ? '+' : ''}${r.stats.weightChange}kg`
-                          : '—'}
+                    )}
+                    {r.reflect && (
+                      <div className="weekly-review-item">
+                        <span className="weekly-review-item-label">△ 反省点</span>
+                        <p className="weekly-review-text">{r.reflect}</p>
                       </div>
-                    </div>
+                    )}
+                    {!r.text && !r.good && !r.reflect && (
+                      <p style={{ color: C.inkL, fontSize: 12, margin: 0 }}>振り返りは未記入です</p>
+                    )}
                   </div>
-                  {r.text && <p className="weekly-review-text">{r.text}</p>}
-                  {r.good && (
-                    <div className="weekly-review-item">
-                      <span className="weekly-review-item-label">✓ よかったこと</span>
-                      <p className="weekly-review-text">{r.good}</p>
-                    </div>
-                  )}
-                  {r.reflect && (
-                    <div className="weekly-review-item">
-                      <span className="weekly-review-item-label">△ 反省点</span>
-                      <p className="weekly-review-text">{r.reflect}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
+                )}
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )

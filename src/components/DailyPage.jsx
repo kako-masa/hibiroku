@@ -5,6 +5,17 @@ import WeeklyReviewSection from './WeeklyReviewSection'
 const today = new Date()
 const todayS = d2s(today)
 
+function getWeekOf(ds) {
+  const d = new Date(ds.replace(/-/g, '/'))
+  const dow = d.getDay()
+  const daysSinceMon = dow === 0 ? 6 : dow - 1
+  const mon = new Date(d)
+  mon.setDate(d.getDate() - daysSinceMon)
+  const sun = new Date(mon)
+  sun.setDate(mon.getDate() + 6)
+  return { start: d2s(mon), end: d2s(sun) }
+}
+
 // 指定日付にその習慣が完了しているか（DailyPage用）
 function isHabitDone(task, rec, date) {
   if (task.linkedTo === 'weight') return !!(rec[date]?.weight)
@@ -315,6 +326,27 @@ export default function DailyPage({ state, actions }) {
                 )
               })}
             </div>
+            {/* 選択週の振り返りへジャンプ */}
+            {(() => {
+              const week = getWeekOf(date)
+              if (week.end >= todayS) return null
+              const s = new Date(week.start.replace(/-/g, '/'))
+              const e = new Date(week.end.replace(/-/g, '/'))
+              return (
+                <div className="dcal-week-jump">
+                  <span className="dcal-week-jump-label">
+                    {s.getMonth()+1}/{s.getDate()}〜{e.getMonth()+1}/{e.getDate()} の振り返り
+                  </span>
+                  <button
+                    className="dcal-week-jump-btn"
+                    onClick={() => {
+                      actions.setTab('history')
+                      actions.setHistorySubTab('review')
+                    }}
+                  >見る →</button>
+                </div>
+              )
+            })()}
           </div>
         )}
       </div>

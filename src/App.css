@@ -1698,3 +1698,90 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   margin-bottom: 7px;
   letter-spacing: 0.3px;
 }
+
+/* ── 週次振り返り個別折りたたみ ── */
+.weekly-past-card {
+  border: 1px solid rgba(180,162,140,0.25);
+  border-radius: 5px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  background: #FFFDF9;
+}
+.weekly-past-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.weekly-past-arrow {
+  font-size: 10px;
+  color: #9C8070;
+  flex-shrink: 0;
+}
+.weekly-past-body {
+  padding: 4px 12px 12px;
+  border-top: 1px solid rgba(180,162,140,0.15);
+}
+
+/* ── 履歴サブタブ ── */
+.history-tabs {
+  display: flex;
+  margin-bottom: 14px;
+  border-bottom: 2px solid rgba(180,162,140,0.2);
+}
+.history-tab {
+  flex: 1;
+  padding: 8px 4px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  color: #9C8070;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+.history-tab.active {
+  color: #6B4F3A;
+  border-bottom-color: #6B4F3A;
+  font-weight: 700;
+}
+
+/* ── 振り返り一覧 ── */
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── カレンダー週ジャンプ ── */
+.dcal-week-jump {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px 2px;
+  border-top: 1px solid rgba(180,162,140,0.2);
+  margin-top: 4px;
+}
+.dcal-week-jump-label {
+  font-size: 10px;
+  color: #9C8070;
+}
+.dcal-week-jump-btn {
+  font-size: 10px;
+  color: #8B6650;
+  background: transparent;
+  border: 1px solid rgba(139,102,80,0.35);
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
