@@ -1405,6 +1405,21 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   letter-spacing: 0.5px;
 }
 
+/* ── お気に入りボタン ── */
+.note-star-btn {
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  color: #C8B8A8;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.note-star-btn:hover { color: #D4AC0D; }
+.note-star-btn.starred { color: #D4AC0D; }
+
 /* ── タグ ── */
 .note-tags-row {
   display: flex;
@@ -1510,6 +1525,20 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   transition: all 0.15s;
 }
 .diary-tag-filter-clear:hover { border-color: #8B6650; color: #8B6650; }
+.diary-fav-filter-btn {
+  font-size: 11px;
+  border-radius: 10px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  background: transparent;
+  border: 1px solid rgba(180,162,140,0.4);
+  color: #9C8070;
+  letter-spacing: 0.3px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.diary-fav-filter-btn.active { background: #D4AC0D; color: #fff; border-color: #D4AC0D; }
 
 /* ── 週次振り返り ── */
 .weekly-card {

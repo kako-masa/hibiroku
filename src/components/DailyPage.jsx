@@ -110,6 +110,13 @@ export default function DailyPage({ state, actions }) {
     setEditText('')
   }
 
+  const toggleStar = (id) => {
+    const newNotes = (r.notes || []).map(n =>
+      n.id !== id ? n : { ...n, starred: !n.starred }
+    )
+    updateRec({ ...rec, [date]: { ...rec[date], notes: newNotes } })
+  }
+
   const deleteNote = (id) => {
     const existing = r.notes || []
     const newRec = { ...rec, [date]: { ...rec[date], notes: existing.filter(n => n.id !== id) } }
@@ -604,6 +611,11 @@ export default function DailyPage({ state, actions }) {
                 <div className="note-entry-header">
                   <span className="note-entry-time">{n.time}</span>
                   <div className="note-entry-actions">
+                    <button
+                      className={`note-star-btn${n.starred ? ' starred' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); toggleStar(n.id) }}
+                      title={n.starred ? 'お気に入り解除' : 'お気に入り登録'}
+                    >{n.starred ? '★' : '☆'}</button>
                     {editingId !== n.id && (
                       <button className="note-edit-btn" onClick={() => startEdit(n)}>編集</button>
                     )}

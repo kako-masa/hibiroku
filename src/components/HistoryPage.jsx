@@ -5,9 +5,10 @@ const MOOD_EMOJIS = ['😊', '🙂', '😐', '😟', '😢']
 
 export default function HistoryPage({ state, actions }) {
   const { rec, sh } = state
-  const { setDate, setTab, setMiniYm } = actions
+  const { setDate, setTab, setMiniYm, updateRec } = actions
   const [expandedNotes, setExpandedNotes] = useState(new Set())
   const [selectedTags, setSelectedTags]   = useState([])
+  const [showOnlyFav, setShowOnlyFav]     = useState(false)
 
   const allDates = Object.keys(rec)
     .filter(d => {
@@ -30,13 +31,19 @@ export default function HistoryPage({ state, actions }) {
   const toggleTag = (tag) =>
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
 
-  const filteredDates = selectedTags.length === 0
-    ? allDates
-    : allDates.filter(ds =>
-        (rec[ds]?.notes || []).some(n =>
-          selectedTags.some(st => (n.tags || []).includes(st))
-        )
-      )
+  const filteredDates = allDates.filter(ds => {
+    const notes = rec[ds]?.notes || []
+    if (showOnlyFav && !notes.some(n => n.starred)) return false
+    if (selectedTags.length > 0 && !notes.some(n => selectedTags.some(st => (n.tags || []).includes(st)))) return false
+    return true
+  })
+
+  const toggleStarInHistory = (ds, noteId) => {
+    const newNotes = (rec[ds]?.notes || []).map(n =>
+      n.id !== noteId ? n : { ...n, starred: !n.starred }
+    )
+    updateRec({ ...rec, [ds]: { ...rec[ds], notes: newNotes } })
+  }
 
   const toggleNote = (uid) => {
     setExpandedNotes(prev => {
@@ -57,34 +64,38 @@ export default function HistoryPage({ state, actions }) {
     <>
       <div className="page-title">DIARY</div>
 
-      {/* タグフィルター */}
-      {allTags.length > 0 && (
-        <div className="diary-tag-filter">
-          {allTags.map(tag => {
-            const tc = tagColor(tag)
-            const active = selectedTags.includes(tag)
-            return (
-              <button
-                key={tag}
-                className="diary-tag-filter-btn"
-                onClick={() => toggleTag(tag)}
-                style={active
-                  ? { background: tc.text, color: '#fff', border: `1px solid ${tc.text}` }
-                  : { background: tc.bg, color: tc.text, border: `1px solid ${tc.border}` }
-                }
-              >{tag}</button>
-            )
-          })}
-          {selectedTags.length > 0 && (
-            <button className="diary-tag-filter-clear" onClick={() => setSelectedTags([])}>✕ クリア</button>
-          )}
-        </div>
-      )}
+      {/* フィルター */}
+      <div className="diary-tag-filter">
+        <button
+          className={`diary-fav-filter-btn${showOnlyFav ? ' active' : ''}`}
+          onClick={() => setShowOnlyFav(v => !v)}
+        >★ お気に入りのみ</button>
+        {allTags.map(tag => {
+          const tc = tagColor(tag)
+          const active = selectedTags.includes(tag)
+          return (
+            <button
+              key={tag}
+              className="diary-tag-filter-btn"
+              onClick={() => toggleTag(tag)}
+              style={active
+                ? { background: tc.text, color: '#fff', border: `1px solid ${tc.text}` }
+                : { background: tc.bg, color: tc.text, border: `1px solid ${tc.border}` }
+              }
+            >{tag}</button>
+          )
+        })}
+        {(selectedTags.length > 0 || showOnlyFav) && (
+          <button className="diary-tag-filter-clear" onClick={() => { setSelectedTags([]); setShowOnlyFav(false) }}>✕ クリア</button>
+        )}
+      </div>
 
       {allDates.length === 0 ? (
         <div className="empty-msg">{'記録がまだありません\n日記タブで記録してみましょう'}</div>
       ) : filteredDates.length === 0 ? (
-        <div className="empty-msg">選択したタグの記録がありません</div>
+        <div className="empty-msg">
+          {showOnlyFav ? 'お気に入りのメモがありません' : '選択したフィルターの記録がありません'}
+        </div>
       ) : (
         <div className="diary-list">
           {filteredDates.map(ds => {
@@ -98,9 +109,9 @@ export default function HistoryPage({ state, actions }) {
             const allNotes = r.notes?.length
               ? r.notes
               : r.note ? [{ id: 'legacy', time: null, text: r.note }] : []
-            const notes = selectedTags.length === 0
-              ? allNotes
-              : allNotes.filter(n => selectedTags.some(st => (n.tags || []).includes(st)))
+            const notes = allNotes
+              .filter(n => !showOnlyFav || n.starred)
+              .filter(n => selectedTags.length === 0 || selectedTags.some(st => (n.tags || []).includes(st)))
 
             return (
               <div key={ds} className="diary-day">
@@ -142,7 +153,16 @@ export default function HistoryPage({ state, actions }) {
                         >
                           <div className="diary-note-card-top">
                             <span className="diary-note-time">{n.time ?? '—'}</span>
-                            <span className="diary-note-chevron">{isOpen ? '▲' : '▼'}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              {n.id !== 'legacy' && (
+                                <button
+                                  className={`note-star-btn${n.starred ? ' starred' : ''}`}
+                                  onClick={(e) => { e.stopPropagation(); toggleStarInHistory(ds, n.id) }}
+                                  title={n.starred ? 'お気に入り解除' : 'お気に入り登録'}
+                                >{n.starred ? '★' : '☆'}</button>
+                              )}
+                              <span className="diary-note-chevron">{isOpen ? '▲' : '▼'}</span>
+                            </div>
                           </div>
                           {isOpen ? (
                             <p className="diary-note-body expanded">{n.text}</p>
