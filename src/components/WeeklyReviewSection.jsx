@@ -79,16 +79,49 @@ function StatsRow({ stats, style }) {
   )
 }
 
+function ReviewForm({ form, onChange, onSave, onCancel }) {
+  return (
+    <div className="weekly-form">
+      <div className="weekly-form-label">今週はどんな週でしたか？</div>
+      <textarea
+        className="weekly-textarea"
+        rows={3}
+        value={form.text}
+        onChange={e => onChange({ ...form, text: e.target.value })}
+        placeholder="先週全体を振り返って…"
+        autoFocus
+      />
+      <div className="weekly-form-label">よかったこと</div>
+      <textarea
+        className="weekly-textarea"
+        rows={2}
+        value={form.good}
+        onChange={e => onChange({ ...form, good: e.target.value })}
+        placeholder="うれしかったこと、うまくいったこと…"
+      />
+      <div className="weekly-form-label">反省点</div>
+      <textarea
+        className="weekly-textarea"
+        rows={2}
+        value={form.reflect}
+        onChange={e => onChange({ ...form, reflect: e.target.value })}
+        placeholder="改善したいこと、次週に活かしたいこと…"
+      />
+      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+        <button className="note-edit-cancel-btn" onClick={onCancel}>キャンセル</button>
+        <button className="note-add-btn" onClick={onSave}>保存</button>
+      </div>
+    </div>
+  )
+}
+
 export default function WeeklyReviewSection({ rec, weeklyReviews, updateWeeklyReviews }) {
   const lastWeek = getLastWeek()
   const isMonday = today.getDay() === 1
-  const existing = weeklyReviews.find(r => r.weekStart === lastWeek.start)
-  const stats = computeStats(rec, lastWeek.start, lastWeek.end)
 
-  const [formOpen, setFormOpen]       = useState(false)
-  const [formText, setFormText]       = useState('')
-  const [formGood, setFormGood]       = useState('')
-  const [formReflect, setFormReflect] = useState('')
+  // 全週共通の編集状態
+  const [editingWeek, setEditingWeek] = useState(null)
+  const [editForm, setEditForm]       = useState({ text: '', good: '', reflect: '' })
   const [openPast, setOpenPast]       = useState(new Set())
 
   const togglePast = (weekStart) => {
@@ -99,31 +132,47 @@ export default function WeeklyReviewSection({ rec, weeklyReviews, updateWeeklyRe
     })
   }
 
-  const openForm = () => {
-    setFormText(existing?.text || '')
-    setFormGood(existing?.good || '')
-    setFormReflect(existing?.reflect || '')
-    setFormOpen(true)
+  const openEdit = (weekStart, existingReview) => {
+    setEditingWeek(weekStart)
+    setEditForm({
+      text:    existingReview?.text    || '',
+      good:    existingReview?.good    || '',
+      reflect: existingReview?.reflect || '',
+    })
+    // 過去カードは自動的に展開
+    if (weekStart !== lastWeek.start) {
+      setOpenPast(prev => new Set([...prev, weekStart]))
+    }
   }
 
-  const saveReview = () => {
-    const review = {
-      id: existing?.id || Date.now().toString(),
-      weekStart: lastWeek.start,
-      weekEnd:   lastWeek.end,
-      stats,
-      text:    formText.trim(),
-      good:    formGood.trim(),
-      reflect: formReflect.trim(),
-      createdAt: new Date().toISOString(),
-    }
-    if (existing) {
-      updateWeeklyReviews(weeklyReviews.map(r => r.weekStart === lastWeek.start ? review : r))
-    } else {
-      updateWeeklyReviews([review, ...weeklyReviews])
-    }
-    setFormOpen(false)
+  const closeEdit = () => {
+    setEditingWeek(null)
+    setEditForm({ text: '', good: '', reflect: '' })
   }
+
+  const saveReview = (weekStart, weekEnd) => {
+    const existingRev = weeklyReviews.find(r => r.weekStart === weekStart)
+    const currentStats = computeStats(rec, weekStart, weekEnd)
+    const review = {
+      id:        existingRev?.id || Date.now().toString(),
+      weekStart,
+      weekEnd,
+      stats:     currentStats,
+      text:      editForm.text.trim(),
+      good:      editForm.good.trim(),
+      reflect:   editForm.reflect.trim(),
+      createdAt: existingRev?.createdAt || new Date().toISOString(),
+    }
+    if (existingRev) {
+      updateWeeklyReviews(weeklyReviews.map(r => r.weekStart === weekStart ? review : r))
+    } else {
+      updateWeeklyReviews([...weeklyReviews, review])
+    }
+    closeEdit()
+  }
+
+  const lastWeekExisting = weeklyReviews.find(r => r.weekStart === lastWeek.start)
+  const lastWeekStats    = computeStats(rec, lastWeek.start, lastWeek.end)
 
   const pastReviews = weeklyReviews
     .filter(r => r.weekStart !== lastWeek.start)
@@ -142,69 +191,46 @@ export default function WeeklyReviewSection({ rec, weeklyReviews, updateWeeklyRe
           )}
         </div>
 
-        <StatsRow stats={stats} />
+        <StatsRow stats={lastWeekStats} />
 
-        {formOpen ? (
-          <div className="weekly-form">
-            <div className="weekly-form-label">今週はどんな週でしたか？</div>
-            <textarea
-              className="weekly-textarea"
-              rows={3}
-              value={formText}
-              onChange={e => setFormText(e.target.value)}
-              placeholder="先週全体を振り返って…"
-              autoFocus
-            />
-            <div className="weekly-form-label">よかったこと</div>
-            <textarea
-              className="weekly-textarea"
-              rows={2}
-              value={formGood}
-              onChange={e => setFormGood(e.target.value)}
-              placeholder="うれしかったこと、うまくいったこと…"
-            />
-            <div className="weekly-form-label">反省点</div>
-            <textarea
-              className="weekly-textarea"
-              rows={2}
-              value={formReflect}
-              onChange={e => setFormReflect(e.target.value)}
-              placeholder="改善したいこと、次週に活かしたいこと…"
-            />
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <button className="note-edit-cancel-btn" onClick={() => setFormOpen(false)}>キャンセル</button>
-              <button className="note-add-btn" onClick={saveReview}>保存</button>
-            </div>
-          </div>
-        ) : existing ? (
+        {editingWeek === lastWeek.start ? (
+          <ReviewForm
+            form={editForm}
+            onChange={setEditForm}
+            onSave={() => saveReview(lastWeek.start, lastWeek.end)}
+            onCancel={closeEdit}
+          />
+        ) : lastWeekExisting ? (
           <div className="weekly-existing">
-            {existing.text && <p className="weekly-review-text">{existing.text}</p>}
-            {existing.good && (
+            {lastWeekExisting.text && <p className="weekly-review-text">{lastWeekExisting.text}</p>}
+            {lastWeekExisting.good && (
               <div className="weekly-review-item">
                 <span className="weekly-review-item-label">✓ よかったこと</span>
-                <p className="weekly-review-text">{existing.good}</p>
+                <p className="weekly-review-text">{lastWeekExisting.good}</p>
               </div>
             )}
-            {existing.reflect && (
+            {lastWeekExisting.reflect && (
               <div className="weekly-review-item">
                 <span className="weekly-review-item-label">△ 反省点</span>
-                <p className="weekly-review-text">{existing.reflect}</p>
+                <p className="weekly-review-text">{lastWeekExisting.reflect}</p>
               </div>
             )}
-            <button className="weekly-edit-btn" onClick={openForm}>編集</button>
+            <button className="weekly-edit-btn" onClick={() => openEdit(lastWeek.start, lastWeekExisting)}>編集</button>
           </div>
         ) : (
-          <button className="weekly-write-btn" onClick={openForm}>
+          <button className="weekly-write-btn" onClick={() => openEdit(lastWeek.start, null)}>
             + 先週の振り返りを書く
           </button>
         )}
       </div>
 
-      {/* 過去の振り返り（個別折りたたみ）*/}
+      {/* 過去の振り返り（個別折りたたみ・書き込み可）*/}
       {pastReviews.length > 0 && (
         <div style={{ marginTop: 8 }}>
           {pastReviews.map(r => {
-            const isOpen = openPast.has(r.weekStart)
+            const isOpen   = openPast.has(r.weekStart)
+            const hasText  = r.text || r.good || r.reflect
+            const isEditing = editingWeek === r.weekStart
             return (
               <div key={r.weekStart} className="weekly-past-card">
                 <button className="weekly-past-header" onClick={() => togglePast(r.weekStart)}>
@@ -214,21 +240,34 @@ export default function WeeklyReviewSection({ rec, weeklyReviews, updateWeeklyRe
                 {isOpen && (
                   <div className="weekly-past-body">
                     <StatsRow stats={r.stats} style={{ marginBottom: 8 }} />
-                    {r.text && <p className="weekly-review-text">{r.text}</p>}
-                    {r.good && (
-                      <div className="weekly-review-item">
-                        <span className="weekly-review-item-label">✓ よかったこと</span>
-                        <p className="weekly-review-text">{r.good}</p>
-                      </div>
-                    )}
-                    {r.reflect && (
-                      <div className="weekly-review-item">
-                        <span className="weekly-review-item-label">△ 反省点</span>
-                        <p className="weekly-review-text">{r.reflect}</p>
-                      </div>
-                    )}
-                    {!r.text && !r.good && !r.reflect && (
-                      <p style={{ color: C.inkL, fontSize: 12, margin: 0 }}>振り返りは未記入です</p>
+                    {isEditing ? (
+                      <ReviewForm
+                        form={editForm}
+                        onChange={setEditForm}
+                        onSave={() => saveReview(r.weekStart, r.weekEnd)}
+                        onCancel={closeEdit}
+                      />
+                    ) : hasText ? (
+                      <>
+                        {r.text && <p className="weekly-review-text">{r.text}</p>}
+                        {r.good && (
+                          <div className="weekly-review-item">
+                            <span className="weekly-review-item-label">✓ よかったこと</span>
+                            <p className="weekly-review-text">{r.good}</p>
+                          </div>
+                        )}
+                        {r.reflect && (
+                          <div className="weekly-review-item">
+                            <span className="weekly-review-item-label">△ 反省点</span>
+                            <p className="weekly-review-text">{r.reflect}</p>
+                          </div>
+                        )}
+                        <button className="weekly-edit-btn" onClick={() => openEdit(r.weekStart, r)}>編集</button>
+                      </>
+                    ) : (
+                      <button className="weekly-write-btn" onClick={() => openEdit(r.weekStart, null)}>
+                        + この週の振り返りを書く
+                      </button>
                     )}
                   </div>
                 )}
