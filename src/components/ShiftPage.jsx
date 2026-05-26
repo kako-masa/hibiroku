@@ -4,16 +4,18 @@ import { C, SHIFTS, WJ, pad, d2s } from '../constants'
 const todayS = d2s(new Date())
 
 export default function ShiftPage({ state, actions }) {
-  const { sh, rec, miniYm, shTodos } = state
-  const { updateSh, updateRec, updateShTodos } = actions
+  const { sh, rec, miniYm, shTodos, shopping } = state
+  const { updateSh, updateRec, updateShTodos, updateShopping } = actions
   const [ym, setYm] = useState(miniYm)
   const [picker, setPicker] = useState(null)
   const [planInput, setPlanInput] = useState('')
   const [bulkOpen, setBulkOpen] = useState(false)
   const [bulkDraft, setBulkDraft] = useState({})
   const [todoInput, setTodoInput] = useState('')
+  const [shopInput, setShopInput] = useState('')
   const planRef = useRef(null)
   const todoRef = useRef(null)
+  const shopRef = useRef(null)
 
   const { y, m } = ym
   const dim = new Date(y, m + 1, 0).getDate()
@@ -188,8 +190,31 @@ export default function ShiftPage({ state, actions }) {
 
   const pickerPlans = picker ? (rec[picker]?.plans || []) : []
 
+  // 買い物リスト操作
+  const addShopItem = () => {
+    const text = shopInput.trim()
+    if (!text) return
+    updateShopping([...shopping, { id: Date.now().toString(), text, bought: false }])
+    setShopInput('')
+    if (shopRef.current) shopRef.current.focus()
+  }
+
+  const toggleShopItem = (id) => {
+    updateShopping(shopping.map(i => i.id === id ? { ...i, bought: !i.bought } : i))
+  }
+
+  const deleteShopItem = (id) => {
+    updateShopping(shopping.filter(i => i.id !== id))
+  }
+
+  const clearBought = () => {
+    updateShopping(shopping.filter(i => !i.bought))
+  }
+
   const pendingTodos = shTodos.filter(t => !t.done)
   const doneTodos = shTodos.filter(t => t.done)
+  const pendingShop = shopping.filter(i => !i.bought)
+  const boughtShop = shopping.filter(i => i.bought)
 
   return (
     <>
@@ -380,6 +405,131 @@ export default function ShiftPage({ state, actions }) {
                 </span>
                 <button
                   onClick={() => deleteTodo(t.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: C.inkL,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    padding: '0 2px',
+                    flexShrink: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* 買い物リスト */}
+      <div className="page-title" style={{ marginTop: 20 }}>SHOPPING LIST</div>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          <input
+            ref={shopRef}
+            className="plan-input"
+            type="text"
+            placeholder="買うものを入力…"
+            value={shopInput}
+            onChange={e => setShopInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addShopItem() } }}
+          />
+          <button
+            className="plan-add-btn"
+            onClick={addShopItem}
+            disabled={!shopInput.trim()}
+          >
+            追加
+          </button>
+        </div>
+
+        {shopping.length === 0 && (
+          <div className="empty-msg" style={{ padding: '16px 0' }}>買い物リストが空です</div>
+        )}
+
+        {/* 未購入 */}
+        {pendingShop.map(item => (
+          <div
+            key={item.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '9px 10px',
+              marginBottom: 6,
+              background: '#FFFDF9',
+              borderRadius: 5,
+              border: '1px solid rgba(180,162,140,0.3)',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={false}
+              onChange={() => toggleShopItem(item.id)}
+              style={{ accentColor: C.leather, width: 17, height: 17, flexShrink: 0, cursor: 'pointer' }}
+            />
+            <span style={{ flex: 1, fontSize: 13, color: C.ink, lineHeight: 1.4 }}>{item.text}</span>
+          </div>
+        ))}
+
+        {/* 購入済み */}
+        {boughtShop.length > 0 && (
+          <>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              margin: '10px 0 6px',
+              paddingLeft: 2,
+            }}>
+              {pendingShop.length > 0 && (
+                <span style={{ fontSize: 10, color: C.inkL, letterSpacing: 1 }}>購入済み</span>
+              )}
+              <button
+                onClick={clearBought}
+                style={{
+                  marginLeft: 'auto',
+                  fontSize: 11,
+                  color: C.inkL,
+                  background: 'none',
+                  border: '1px solid rgba(180,162,140,0.4)',
+                  borderRadius: 4,
+                  padding: '3px 9px',
+                  cursor: 'pointer',
+                }}
+              >
+                購入済みをクリア
+              </button>
+            </div>
+            {boughtShop.map(item => (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '9px 10px',
+                  marginBottom: 6,
+                  background: 'rgba(237,231,220,0.4)',
+                  borderRadius: 5,
+                  border: '1px solid rgba(180,162,140,0.2)',
+                  opacity: 0.65,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={true}
+                  onChange={() => toggleShopItem(item.id)}
+                  style={{ accentColor: C.inkL, width: 17, height: 17, flexShrink: 0, cursor: 'pointer' }}
+                />
+                <span style={{ flex: 1, fontSize: 13, color: C.inkL, textDecoration: 'line-through', lineHeight: 1.4 }}>
+                  {item.text}
+                </span>
+                <button
+                  onClick={() => deleteShopItem(item.id)}
                   style={{
                     background: 'none',
                     border: 'none',

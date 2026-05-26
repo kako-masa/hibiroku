@@ -15,12 +15,13 @@ export async function loadAllData(uid) {
     getDoc(dataDoc(uid, 'weekly')),
   ])
   return {
-    rec:     recSnap.exists()      ? recSnap.data()                     : {},
-    sh:      shSnap.exists()       ? shSnap.data()                      : {},
-    goals:   goalsSnap.exists()    ? (goalsSnap.data().items ?? [])     : [],
-    learn:   learnSnap.exists()    ? (learnSnap.data().items ?? [])     : [],
-    shTodos: settingsSnap.exists() ? (settingsSnap.data().shTodos ?? []) : [],
-    weekly:  weeklySnap.exists()   ? (weeklySnap.data().items ?? [])    : [],
+    rec:      recSnap.exists()      ? recSnap.data()                       : {},
+    sh:       shSnap.exists()       ? shSnap.data()                        : {},
+    goals:    goalsSnap.exists()    ? (goalsSnap.data().items ?? [])       : [],
+    learn:    learnSnap.exists()    ? (learnSnap.data().items ?? [])       : [],
+    shTodos:  settingsSnap.exists() ? (settingsSnap.data().shTodos   ?? []) : [],
+    shopping: settingsSnap.exists() ? (settingsSnap.data().shopping  ?? []) : [],
+    weekly:   weeklySnap.exists()   ? (weeklySnap.data().items ?? [])      : [],
   }
 }
 
@@ -29,6 +30,8 @@ export async function saveToFirestore(uid, key, value) {
     await setDoc(dataDoc(uid, key), { items: value })
   } else if (key === 'shTodos') {
     await setDoc(dataDoc(uid, 'settings'), { shTodos: value }, { merge: true })
+  } else if (key === 'shopping') {
+    await setDoc(dataDoc(uid, 'settings'), { shopping: value }, { merge: true })
   } else {
     // rec / sh: valueはdateキーのオブジェクト
     await setDoc(dataDoc(uid, key), value)
@@ -39,19 +42,21 @@ export async function migrateFromLocalStorage(uid) {
   function lsGet(k, fallback) {
     try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback } catch { return fallback }
   }
-  const rec     = lsGet('hbr-rec', {})
-  const sh      = lsGet('hbr-sh', {})
-  const goals   = lsGet('hbr-goals', [])
-  const learn   = lsGet('hbr-learn', [])
-  const shTodos = lsGet('hbr-sh-todos', [])
-  const weekly  = lsGet('hbr-weekly', [])
+  const rec      = lsGet('hbr-rec', {})
+  const sh       = lsGet('hbr-sh', {})
+  const goals    = lsGet('hbr-goals', [])
+  const learn    = lsGet('hbr-learn', [])
+  const shTodos  = lsGet('hbr-sh-todos', [])
+  const weekly   = lsGet('hbr-weekly', [])
+  const shopping = lsGet('hbr-shopping', [])
 
   await Promise.all([
-    saveToFirestore(uid, 'rec',     rec),
-    saveToFirestore(uid, 'sh',      sh),
-    saveToFirestore(uid, 'goals',   goals),
-    saveToFirestore(uid, 'learn',   learn),
-    saveToFirestore(uid, 'shTodos', shTodos),
-    saveToFirestore(uid, 'weekly',  weekly),
+    saveToFirestore(uid, 'rec',      rec),
+    saveToFirestore(uid, 'sh',       sh),
+    saveToFirestore(uid, 'goals',    goals),
+    saveToFirestore(uid, 'learn',    learn),
+    saveToFirestore(uid, 'shTodos',  shTodos),
+    saveToFirestore(uid, 'weekly',   weekly),
+    saveToFirestore(uid, 'shopping', shopping),
   ])
 }
