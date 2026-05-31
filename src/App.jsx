@@ -32,6 +32,7 @@ export default function App() {
   const [learn, setLearn] = useState(() => lsGet('hbr-learn', []))
   const [shTodos, setShTodos] = useState(() => lsGet('hbr-sh-todos', []))
   const [weeklyReviews, setWeeklyReviews] = useState(() => lsGet('hbr-weekly', []))
+  const [shopping, setShopping] = useState(() => lsGet('hbr-shopping', []))
   const [historySubTab, setHistorySubTab] = useState('diary')
 
   // Firebase auth
@@ -64,11 +65,13 @@ export default function App() {
               const d2 = await loadAllData(u.uid)
               setRec(d2.rec);     setSh(d2.sh);         setGoals(d2.goals)
               setLearn(d2.learn); setShTodos(d2.shTodos); setWeeklyReviews(d2.weekly)
+              setShopping(d2.shopping)
               setMigrated(true)
             }
           } else {
             setRec(data.rec);     setSh(data.sh);         setGoals(data.goals)
             setLearn(data.learn); setShTodos(data.shTodos); setWeeklyReviews(data.weekly)
+            setShopping(data.shopping)
           }
           setSyncStatus('synced')
         } catch (err) {
@@ -128,8 +131,12 @@ export default function App() {
     setWeeklyReviews(v); lsSave('hbr-weekly', v); fsSave('weekly', v)
   }, [fsSave])
 
-  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn, shTodos, weeklyReviews, historySubTab }
-  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn, updateShTodos, updateWeeklyReviews, setHistorySubTab }
+  const updateShopping = useCallback((v) => {
+    setShopping(v); lsSave('hbr-shopping', v); fsSave('shopping', v)
+  }, [fsSave])
+
+  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn, shTodos, weeklyReviews, shopping, historySubTab }
+  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn, updateShTodos, updateWeeklyReviews, updateShopping, setHistorySubTab }
 
   const pages = { shift: ShiftPage, goal: GoalPage, history: HistoryPage, graph: GraphPage, learning: LearningPage }
   const PageComponent = pages[tab]

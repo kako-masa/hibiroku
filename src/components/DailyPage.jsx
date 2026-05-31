@@ -594,6 +594,7 @@ export default function DailyPage({ state, actions }) {
           {r.exercise && (
             <div style={{ marginTop: 8 }}>
               <input
+                key={`${date}-exNote`}
                 className="ex-note-input"
                 type="text"
                 defaultValue={r.exNote || ''}
