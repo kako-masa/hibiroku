@@ -16,6 +16,14 @@ function getWeekOf(ds) {
   return { start: d2s(mon), end: d2s(sun) }
 }
 
+function driveUrlToThumbnail(url) {
+  const m1 = url.match(/\/file\/d\/([^/?]+)/)
+  if (m1) return `https://drive.google.com/thumbnail?id=${m1[1]}&sz=w800`
+  const m2 = url.match(/[?&]id=([^&]+)/)
+  if (m2) return `https://drive.google.com/thumbnail?id=${m2[1]}&sz=w800`
+  return url
+}
+
 // 指定日付にその習慣が完了しているか（DailyPage用）
 function isHabitDone(task, rec, date) {
   if (task.linkedTo === 'weight') return !!(rec[date]?.weight)
@@ -37,6 +45,8 @@ export default function DailyPage({ state, actions }) {
   const [editText, setEditText] = useState('')
   const [tagInputId, setTagInputId] = useState(null)
   const [tagText,    setTagText]    = useState('')
+  const [photoInput, setPhotoInput] = useState('')
+  const [expandedPhoto, setExpandedPhoto] = useState(null)
   const [habitOpen, setHabitOpen] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hbr-habit-open') ?? 'true') } catch { return true }
   })
@@ -162,6 +172,21 @@ export default function DailyPage({ state, actions }) {
 
   const openTagInput  = (id) => { setTagInputId(id); setTagText('') }
   const closeTagInput = ()   => { setTagInputId(null); setTagText('') }
+
+  const addPhoto = () => {
+    const url = photoInput.trim()
+    if (!url) return
+    const thumb = driveUrlToThumbnail(url)
+    const photo = { id: Date.now().toString(), thumb, original: url }
+    const newRec = { ...rec, [date]: { ...rec[date], photos: [...(r.photos || []), photo] } }
+    updateRec(newRec)
+    setPhotoInput('')
+  }
+
+  const removePhoto = (id) => {
+    const newRec = { ...rec, [date]: { ...rec[date], photos: (r.photos || []).filter(p => p.id !== id) } }
+    updateRec(newRec)
+  }
 
   const handleExNote = (e) => {
     const newRec = { ...rec, [date]: { ...rec[date], exNote: e.target.value } }
@@ -738,6 +763,99 @@ export default function DailyPage({ state, actions }) {
             )
           })}
         </div>
+
+        {/* 写真 */}
+        <div className="ruled">
+          <div className="sec-label">PHOTOS</div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+            <input
+              className="note-tag-input"
+              style={{ flex: 1, fontSize: 12 }}
+              value={photoInput}
+              onChange={e => setPhotoInput(e.target.value)}
+              placeholder="Google Drive の共有URLを貼り付け…"
+              onKeyDown={e => { if (e.key === 'Enter') addPhoto() }}
+            />
+            <button className="note-add-btn" onClick={addPhoto} disabled={!photoInput.trim()}>追加</button>
+          </div>
+          {(r.photos || []).length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {(r.photos || []).map(p => (
+                <div key={p.id} style={{ position: 'relative' }}>
+                  <img
+                    src={p.thumb}
+                    alt=""
+                    onClick={() => setExpandedPhoto(p)}
+                    style={{
+                      width: 90, height: 90,
+                      objectFit: 'cover',
+                      borderRadius: 4,
+                      border: `1px solid ${C.rule}`,
+                      display: 'block',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <button
+                    onClick={() => removePhoto(p.id)}
+                    style={{
+                      position: 'absolute', top: 3, right: 3,
+                      background: 'rgba(44,36,32,0.65)',
+                      color: '#fff', border: 'none',
+                      borderRadius: '50%',
+                      width: 18, height: 18,
+                      fontSize: 10, lineHeight: 1,
+                      cursor: 'pointer', padding: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >×</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 写真拡大モーダル */}
+        {expandedPhoto && (
+          <div
+            onClick={() => setExpandedPhoto(null)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(0,0,0,0.75)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 1000,
+            }}
+          >
+            <div onClick={e => e.stopPropagation()} style={{ position: 'relative', maxWidth: '90vw', maxHeight: '85vh' }}>
+              <img
+                src={expandedPhoto.thumb}
+                alt=""
+                style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: 6, display: 'block' }}
+              />
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 10 }}>
+                <a
+                  href={expandedPhoto.original}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    fontSize: 12, color: '#fff',
+                    background: 'rgba(255,255,255,0.2)',
+                    padding: '5px 14px', borderRadius: 4,
+                    textDecoration: 'none',
+                  }}
+                >Drive で開く →</a>
+                <button
+                  onClick={() => setExpandedPhoto(null)}
+                  style={{
+                    fontSize: 12, color: '#fff',
+                    background: 'rgba(255,255,255,0.2)',
+                    padding: '5px 14px', borderRadius: 4,
+                    border: 'none', cursor: 'pointer',
+                  }}
+                >閉じる</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* AI アドバイス */}
         <div>
