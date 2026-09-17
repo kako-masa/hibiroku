@@ -491,24 +491,35 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .cal-cell {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
-  padding: 4px 1px 3px;
-  height: 52px;
+  padding: 4px 2px 3px;
+  min-height: 74px;
   overflow: hidden;
   border-radius: 4px;
   cursor: pointer;
-  background: transparent;
+  background: #FFFDF9;
   border: 1px solid rgba(180,162,140,0.3);
   font-family: inherit;
-  gap: 1px;
+  gap: 2px;
 }
-.cal-cell.today-cell { border: 1.5px solid #8B6650; }
+.cal-cell.today-cell { border: 1.5px solid #8B6650; background: rgba(139,102,80,0.06); }
 .cal-cell.cal-cell-sel { border: 2px solid #8B6650; }
-.cal-day { font-size: 10px; color: #2C2420; }
-.cal-mark { font-size: 11px; line-height: 1; }
+.cal-day { font-size: 10px; color: #2C2420; text-align: center; }
+.cal-shift-badge {
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.6;
+  border-radius: 3px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .cal-plan-title {
-  font-size: 7px;
+  font-size: 8px;
   color: #5C4030;
   width: 100%;
   overflow: hidden;
@@ -520,9 +531,10 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   text-align: center;
 }
 .cal-plan-more {
-  font-size: 7px;
+  font-size: 8px;
   line-height: 1.2;
   color: #9C7A60;
+  text-align: center;
 }
 .picker-box {
   background: #FFFDF9;

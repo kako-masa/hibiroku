@@ -110,13 +110,6 @@ export default function ShiftPage({ state, actions }) {
     updateShTodos(shTodos.filter(t => t.id !== id))
   }
 
-  const counts = {}
-  for (let d = 1; d <= dim; d++) {
-    const ds = `${y}-${pad(m + 1)}-${pad(d)}`
-    const k = sh[ds] || rec[ds]?.shift
-    if (k) counts[k] = (counts[k] || 0) + 1
-  }
-
   const cells = []
   WJ.forEach((w, i) => {
     const color = i === 0 ? '#A06060' : i === 6 ? '#607080' : '#9C8070'
@@ -130,17 +123,18 @@ export default function ShiftPage({ state, actions }) {
     const plans = rec[ds]?.plans || []
     const isToday = ds === todayS
     const isSel = picker === ds
+    const dow = new Date(y, m, d).getDay()
+    const dayColor = dow === 0 ? '#A06060' : dow === 6 ? '#607080' : C.ink
     cells.push(
       <button
         key={ds}
         className={`cal-cell${isToday ? ' today-cell' : ''}${isSel ? ' cal-cell-sel' : ''}`}
-        style={{ background: sv ? sv.bg : 'transparent' }}
         onClick={() => openPicker(ds)}
       >
-        <span className="cal-day" style={{ color: isToday ? C.leatherM : C.ink, fontWeight: isToday ? 700 : 400 }}>
+        <span className="cal-day" style={{ color: isToday ? C.leatherM : dayColor, fontWeight: isToday ? 700 : 400 }}>
           {d}
         </span>
-        {sv && <span className="cal-mark" style={{ color: sv.c }}>{sv.m}</span>}
+        {sv && <span className="cal-shift-badge" style={{ background: sv.bg, color: sv.c }}>{sv.l}</span>}
         {plans.slice(0, 2).map(p => (
           <span key={p.id} className="cal-plan-title">{p.text}</span>
         ))}
@@ -296,28 +290,6 @@ export default function ShiftPage({ state, actions }) {
       )}
 
       <div className="cal-grid">{cells}</div>
-
-      <div className="page-title" style={{ marginTop: 16 }}>SUMMARY</div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {Object.entries(SHIFTS).map(([key, s]) => (
-          <div
-            key={key}
-            style={{
-              background: s.bg,
-              border: `1px solid ${s.c}`,
-              borderRadius: 4,
-              padding: '5px 10px',
-              fontSize: 12,
-              color: s.c,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            {s.m} {s.l} <strong>{counts[key] || 0}</strong>日
-          </div>
-        ))}
-      </div>
 
       {/* やることリスト */}
       <div className="page-title" style={{ marginTop: 20 }}>TO-DO LIST</div>

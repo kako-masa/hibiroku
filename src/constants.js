@@ -17,13 +17,14 @@ export const C = {
 
 // ── シフト定義 ──
 export const SHIFTS = {
-  dayShift:  { l: '日勤',   m: '☀',  c: C.gold,    bg: '#F5EDD8' },
-  dayOff:    { l: '休み',   m: '◯',  c: C.sage,    bg: '#E4EDE8' },
-  semiNight: { l: '準夜',   m: '◑',  c: '#5A7A9A', bg: '#E0E8F0' },
-  midnight:  { l: '深夜',   m: '●',  c: '#4A3A6A', bg: '#EAE4F5' },
-  lateStart: { l: '遅出',   m: '▷',  c: C.mauve,   bg: '#F0E8EE' },
-  longDay:   { l: '長日勤', m: '◈',  c: '#7A5830', bg: '#F0E8D8' },
-  halfDay:   { l: '半日',   m: '◐',  c: C.rose,    bg: '#F5E8E4' },
+  dayShift:       { l: '日勤',   m: 'ー',  c: C.gold,    bg: '#F5EDD8' },
+  dayOff:         { l: '休み',   m: '公',  c: C.sage,    bg: '#E4EDE8' },
+  earlySemiNight: { l: '早準夜', m: '△',  c: C.slate,   bg: '#E7EBEE' },
+  semiNight:      { l: '準夜',   m: '▲',  c: '#5A7A9A', bg: '#E0E8F0' },
+  midnight:       { l: '深夜',   m: '●',  c: '#4A3A6A', bg: '#EAE4F5' },
+  lateStart:      { l: '遅出',   m: 'オ2', c: C.mauve,   bg: '#F0E8EE' },
+  longDay:        { l: '長日勤', m: '-2', c: '#7A5830', bg: '#F0E8D8' },
+  paidLeave:      { l: '有休',   m: '有',  c: C.rose,    bg: '#F5E8E4' },
 }
 
 // ── 気分 ──
