@@ -23,8 +23,8 @@ export const SHIFTS = {
   earlySemiNight: { l: '早準夜', m: '△',  c: C.slate,   bg: '#E7EBEE' },
   semiNight:      { l: '準夜',   m: '▲',  c: '#5A7A9A', bg: '#E0E8F0' },
   midnight:       { l: '深夜',   m: '●',  c: '#4A3A6A', bg: '#EAE4F5' },
-  dayOff:         { l: '公休',   m: '公',  c: C.sage,    bg: '#E4EDE8' },
-  paidLeave:      { l: '有休',   m: '有',  c: C.rose,    bg: '#F5E8E4' },
+  dayOff:         { l: '公休',   m: '公',  c: '#B3564A', bg: '#F5DFDA' },
+  paidLeave:      { l: '有休',   m: '有',  c: '#9C4A3F',  bg: '#F2D6D0' },
 }
 
 // ── 気分 ──
