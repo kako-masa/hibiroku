@@ -18,9 +18,9 @@ export const C = {
 // ── シフト定義 ──
 export const SHIFTS = {
   dayShift:       { l: '日勤',   m: 'ー',  c: '#4A8FA8', bg: '#DCEDF2' },
-  longDay:        { l: '☆長日', m: '-2', c: C.ink,     bg: '#CFE2E8' },
+  longDay:        { l: '🔴長日', m: '-2', c: '#2F5F72', bg: '#CFE2E8' },
   lateStart:      { l: '遅出',   m: 'オ2', c: C.mauve,   bg: '#F0E8EE' },
-  earlySemiNight: { l: '★早準', m: '△',  c: C.ink,     bg: '#EAE1F0' },
+  earlySemiNight: { l: '🔴早準', m: '△',  c: '#8B6FA8', bg: '#EAE1F0' },
   semiNight:      { l: '準夜',   m: '▲',  c: '#6B4A8A', bg: '#E3D8ED' },
   midnight:       { l: '深夜',   m: '●',  c: '#4A3A6A', bg: '#EAE4F5' },
   dayOff:         { l: '公休',   m: '公',  c: '#B3564A', bg: '#F5DFDA' },

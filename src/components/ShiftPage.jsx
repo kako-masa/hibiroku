@@ -19,7 +19,7 @@ export default function ShiftPage({ state, actions }) {
 
   const { y, m } = ym
   const dim = new Date(y, m + 1, 0).getDate()
-  const fd = new Date(y, m, 1).getDay()
+  const fd = (new Date(y, m, 1).getDay() + 6) % 7
 
   const goMonth = (delta) => {
     const d = new Date(y, m + delta, 1)
@@ -111,9 +111,9 @@ export default function ShiftPage({ state, actions }) {
   }
 
   const cells = []
-  WJ.forEach((w, i) => {
-    const color = i === 0 ? '#A06060' : i === 6 ? '#607080' : '#9C8070'
-    cells.push(<div key={`hd-${i}`} className="cal-hd" style={{ color }}>{w}</div>)
+  ;[1, 2, 3, 4, 5, 6, 0].forEach((dowIdx, i) => {
+    const color = dowIdx === 0 ? '#A06060' : dowIdx === 6 ? '#607080' : '#9C8070'
+    cells.push(<div key={`hd-${i}`} className="cal-hd" style={{ color }}>{WJ[dowIdx]}</div>)
   })
   for (let i = 0; i < fd; i++) cells.push(<div key={`e-${i}`} />)
   for (let d = 1; d <= dim; d++) {
