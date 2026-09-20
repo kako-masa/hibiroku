@@ -3,6 +3,15 @@ import { C, SHIFTS, WJ, pad, d2s } from '../constants'
 
 const todayS = d2s(new Date())
 
+function ShiftLabel({ s }) {
+  return (
+    <>
+      {s.dot && <span style={{ color: s.dot }}>●</span>}
+      {s.l}
+    </>
+  )
+}
+
 export default function ShiftPage({ state, actions }) {
   const { sh, rec, miniYm, shTodos, shopping } = state
   const { updateSh, updateRec, updateShTodos, updateShopping } = actions
@@ -134,7 +143,7 @@ export default function ShiftPage({ state, actions }) {
         <span className="cal-day" style={{ color: isToday ? C.leatherM : dayColor, fontWeight: isToday ? 700 : 400 }}>
           {d}
         </span>
-        {sv && <span className="cal-shift-badge" style={{ background: sv.bg, color: sv.c }}>{sv.l}</span>}
+        {sv && <span className="cal-shift-badge" style={{ background: sv.bg, color: sv.c }}><ShiftLabel s={sv} /></span>}
         {plans.slice(0, 2).map(p => (
           <span key={p.id} className="cal-plan-title">{p.text}</span>
         ))}
@@ -174,7 +183,7 @@ export default function ShiftPage({ state, actions }) {
               }))}
             >
               <span className="bulk-shift-icon">{s.m}</span>
-              <span className="bulk-shift-label">{s.l}</span>
+              <span className="bulk-shift-label"><ShiftLabel s={s} /></span>
             </button>
           ))}
         </div>
@@ -244,7 +253,7 @@ export default function ShiftPage({ state, actions }) {
                   }}
                   onClick={() => setShift(picker, key)}
                 >
-                  {s.m} {s.l}
+                  {s.m} <ShiftLabel s={s} />
                 </button>
               )
             })}
