@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import './App.css'
-import { TABS, WE, d2s } from './constants'
+import { TABS, WE, d2s, EX_MENU_DEFAULT } from './constants'
 import DailyPage from './components/DailyPage'
 import ShiftPage from './components/ShiftPage'
 import GoalPage from './components/GoalPage'
@@ -33,6 +33,7 @@ export default function App() {
   const [shTodos, setShTodos] = useState(() => lsGet('hbr-sh-todos', []))
   const [weeklyReviews, setWeeklyReviews] = useState(() => lsGet('hbr-weekly', []))
   const [shopping, setShopping] = useState(() => lsGet('hbr-shopping', []))
+  const [exMenu, setExMenu] = useState(() => lsGet('hbr-ex-menu', EX_MENU_DEFAULT))
   const [historySubTab, setHistorySubTab] = useState('diary')
 
   // Firebase auth
@@ -65,13 +66,13 @@ export default function App() {
               const d2 = await loadAllData(u.uid)
               setRec(d2.rec);     setSh(d2.sh);         setGoals(d2.goals)
               setDekita(d2.dekita); setShTodos(d2.shTodos); setWeeklyReviews(d2.weekly)
-              setShopping(d2.shopping)
+              setShopping(d2.shopping); setExMenu(d2.exMenu)
               setMigrated(true)
             }
           } else {
             setRec(data.rec);     setSh(data.sh);         setGoals(data.goals)
             setDekita(data.dekita); setShTodos(data.shTodos); setWeeklyReviews(data.weekly)
-            setShopping(data.shopping)
+            setShopping(data.shopping); setExMenu(data.exMenu)
           }
           setSyncStatus('synced')
         } catch (err) {
@@ -135,8 +136,12 @@ export default function App() {
     setShopping(v); lsSave('hbr-shopping', v); fsSave('shopping', v)
   }, [fsSave])
 
-  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, dekita, shTodos, weeklyReviews, shopping, historySubTab }
-  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateDekita, updateShTodos, updateWeeklyReviews, updateShopping, setHistorySubTab }
+  const updateExMenu = useCallback((v) => {
+    setExMenu(v); lsSave('hbr-ex-menu', v); fsSave('exMenu', v)
+  }, [fsSave])
+
+  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, dekita, shTodos, weeklyReviews, shopping, exMenu, historySubTab }
+  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateDekita, updateShTodos, updateWeeklyReviews, updateShopping, updateExMenu, setHistorySubTab }
 
   const pages = { shift: ShiftPage, goal: GoalPage, history: HistoryPage, graph: GraphPage, dekita: DekitaPage }
   const PageComponent = pages[tab]

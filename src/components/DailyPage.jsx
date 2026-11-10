@@ -32,8 +32,10 @@ function isHabitDone(task, rec, date) {
 }
 
 export default function DailyPage({ state, actions }) {
-  const { date, rec, sh, miniYm, goals, weeklyReviews } = state
-  const { setDate, setMiniYm, updateRec, updateGoals, updateWeeklyReviews } = actions
+  const { date, rec, sh, miniYm, goals, weeklyReviews, exMenu } = state
+  const { setDate, setMiniYm, updateRec, updateGoals, updateWeeklyReviews, updateExMenu } = actions
+  const [exMenuEditing, setExMenuEditing] = useState(false)
+  const [exMenuInput, setExMenuInput] = useState('')
   const [calOpen, setCalOpen] = useState(false)
   const [shiftOpen, setShiftOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
@@ -186,10 +188,44 @@ export default function DailyPage({ state, actions }) {
     updateRec(newRec)
   }
 
-  const handleExNote = (e) => {
-    const newRec = { ...rec, [date]: { ...rec[date], exNote: e.target.value } }
-    updateRec(newRec)
+  // 運動：チェックした種目 (exList) と「その他」(exNote) から exercise を自動で決める
+  const exList = r.exList || []
+  const saveExercise = (list, note) => {
+    const exercise = list.length > 0 || !!note.trim()
+    updateRec({ ...rec, [date]: { ...rec[date], exList: list, exNote: note, exercise } })
   }
+
+  // その日より前で、いちばん最近に記録した量
+  const lastExAmount = (name) => {
+    const dates = Object.keys(rec).filter(d => d < date).sort().reverse()
+    const hitDate = dates.find(d => (rec[d].exList || []).some(e => e.name === name && e.amount))
+    return hitDate ? rec[hitDate].exList.find(e => e.name === name).amount : ''
+  }
+
+  const toggleEx = (name) => {
+    const list = exList.some(e => e.name === name)
+      ? exList.filter(e => e.name !== name)
+      : [...exList, { name, amount: lastExAmount(name) }]
+    saveExercise(list, r.exNote || '')
+  }
+
+  const setExAmount = (name, amount) => {
+    saveExercise(exList.map(e => e.name === name ? { ...e, amount: amount.trim() } : e), r.exNote || '')
+  }
+
+  const handleExNote = (e) => saveExercise(exList, e.target.value)
+
+  const addExMenu = () => {
+    const name = exMenuInput.trim()
+    if (!name || exMenu.includes(name)) return
+    updateExMenu([...exMenu, name])
+    setExMenuInput('')
+  }
+
+  const exText = [
+    ...exList.map(e => e.amount ? `${e.name}${e.amount}` : e.name),
+    ...(r.exNote?.trim() ? [r.exNote.trim()] : []),
+  ].join('、')
 
   // ハビットトラッカー：選択日付のチェックをgoalsに反映
   const toggleHabitToday = (goalId, taskId) => {
@@ -238,7 +274,7 @@ export default function DailyPage({ state, actions }) {
     const sl = shift?.l || '未設定'
     const moodLabel = r.mood !== undefined ? MOODS[r.mood] : '未'
     const noteText = (r.notes || []).map(n => `[${n.time}] ${n.text}`).join(' / ') || r.note || 'なし'
-    const prompt = `看護師サポートAI。【${date}】シフト:${sl}/体重:${r.weight || '未'}kg/体脂肪:${r.fat || '未'}%/睡眠:${r.sleep || '未'}h/気分:${moodLabel}/運動:${r.exercise ? (r.exNote || 'あり') : 'なし'}/日記:${noteText}\n以下JSONのみ(バックティック不要):{"advice":"アドバイス3点(番号改行)","workResources":[{"title":"名称","url":"https://...","description":"説明1文"}],"otherResources":[{"title":"名称","url":"https://...","description":"説明1文"}]}\nworkは看護・緩和ケア関連1〜2件、otherは健康・生活1〜2件。`
+    const prompt = `看護師サポートAI。【${date}】シフト:${sl}/体重:${r.weight || '未'}kg/体脂肪:${r.fat || '未'}%/睡眠:${r.sleep || '未'}h/気分:${moodLabel}/運動:${r.exercise ? (exText || 'あり') : 'なし'}/日記:${noteText}\n以下JSONのみ(バックティック不要):{"advice":"アドバイス3点(番号改行)","workResources":[{"title":"名称","url":"https://...","description":"説明1文"}],"otherResources":[{"title":"名称","url":"https://...","description":"説明1文"}]}\nworkは看護・緩和ケア関連1〜2件、otherは健康・生活1〜2件。`
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
@@ -590,24 +626,82 @@ export default function DailyPage({ state, actions }) {
               )
             })}
           </div>
-          <button
-            className={`ex-btn${r.exercise ? ' active' : ''}`}
-            onClick={() => setRecField('exercise', !r.exercise)}
-          >
-            {r.exercise ? '✓ 運動した' : '+ 運動の記録'}
-          </button>
-          {r.exercise && (
-            <div style={{ marginTop: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 4, marginBottom: 6 }}>
+            <span style={{ fontSize: 11, color: r.exercise ? C.sage : C.inkL, letterSpacing: 1 }}>
+              {r.exercise ? '✓ 運動した' : '運動'}
+            </span>
+            <button className="note-edit-btn" onClick={() => setExMenuEditing(o => !o)}>
+              {exMenuEditing ? '編集を終わる' : 'メニューを編集'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {exMenu.map(name => {
+              const item = exList.find(e => e.name === name)
+              return (
+                <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    className={`ex-btn${item ? ' active' : ''}`}
+                    style={{ width: 'auto', minWidth: 120, textAlign: 'left', padding: '6px 10px', flexShrink: 0 }}
+                    onClick={() => toggleEx(name)}
+                  >
+                    {item ? '✓' : '○'} {name}
+                  </button>
+                  {item && (
+                    <input
+                      key={`${date}-ex-${name}-${item.amount}`}
+                      className="ex-note-input"
+                      type="text"
+                      defaultValue={item.amount}
+                      placeholder="30分、15回×2 など"
+                      onBlur={e => { if (e.target.value.trim() !== item.amount) setExAmount(name, e.target.value) }}
+                    />
+                  )}
+                  {exMenuEditing && (
+                    <button
+                      className="note-del-btn"
+                      style={{ marginLeft: 'auto', flexShrink: 0 }}
+                      onClick={() => updateExMenu(exMenu.filter(n => n !== name))}
+                    >消す</button>
+                  )}
+                </div>
+              )
+            })}
+            {/* メニューから消した種目でも、その日の記録は残して表示 */}
+            {exList.filter(e => !exMenu.includes(e.name)).map(e => (
+              <div key={e.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  className="ex-btn active"
+                  style={{ width: 'auto', minWidth: 120, textAlign: 'left', padding: '6px 10px', flexShrink: 0 }}
+                  onClick={() => toggleEx(e.name)}
+                >✓ {e.name}</button>
+                <span style={{ fontSize: 13, color: C.ink }}>{e.amount}</span>
+              </div>
+            ))}
+          </div>
+          {exMenuEditing && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
               <input
-                key={`${date}-exNote`}
                 className="ex-note-input"
                 type="text"
-                defaultValue={r.exNote || ''}
-                placeholder="ウォーキング30分、ストレッチ… など"
-                onBlur={handleExNote}
+                placeholder="追加する運動の名前"
+                value={exMenuInput}
+                onChange={e => setExMenuInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) addExMenu() }}
               />
+              <button className="note-add-btn" style={{ flexShrink: 0 }} onClick={addExMenu} disabled={!exMenuInput.trim()}>追加</button>
             </div>
           )}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
+            <span style={{ fontSize: 11, color: C.inkL, flexShrink: 0 }}>その他</span>
+            <input
+              key={`${date}-exNote-${r.exNote || ''}`}
+              className="ex-note-input"
+              type="text"
+              defaultValue={r.exNote || ''}
+              placeholder="ウォーキング30分 など"
+              onBlur={e => { if (e.target.value !== (r.exNote || '')) handleExNote(e) }}
+            />
+          </div>
         </div>
 
         {/* 日記 */}

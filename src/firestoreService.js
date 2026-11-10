@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from './firebase'
+import { EX_MENU_DEFAULT } from './constants'
 
 function dataDoc(uid, name) {
   return doc(db, 'users', uid, 'data', name)
@@ -21,6 +22,7 @@ export async function loadAllData(uid) {
     dekita:   dekitaSnap.exists()   ? dekitaSnap.data()                    : {},
     shTodos:  settingsSnap.exists() ? (settingsSnap.data().shTodos   ?? []) : [],
     shopping: settingsSnap.exists() ? (settingsSnap.data().shopping  ?? []) : [],
+    exMenu:   settingsSnap.exists() ? (settingsSnap.data().exMenu ?? EX_MENU_DEFAULT) : EX_MENU_DEFAULT,
     weekly:   weeklySnap.exists()   ? (weeklySnap.data().items ?? [])      : [],
   }
 }
@@ -32,6 +34,8 @@ export async function saveToFirestore(uid, key, value) {
     await setDoc(dataDoc(uid, 'settings'), { shTodos: value }, { merge: true })
   } else if (key === 'shopping') {
     await setDoc(dataDoc(uid, 'settings'), { shopping: value }, { merge: true })
+  } else if (key === 'exMenu') {
+    await setDoc(dataDoc(uid, 'settings'), { exMenu: value }, { merge: true })
   } else {
     // rec / sh / dekita: valueはdateキーのオブジェクト
     await setDoc(dataDoc(uid, key), value)
@@ -49,6 +53,7 @@ export async function migrateFromLocalStorage(uid) {
   const shTodos  = lsGet('hbr-sh-todos', [])
   const weekly   = lsGet('hbr-weekly', [])
   const shopping = lsGet('hbr-shopping', [])
+  const exMenu   = lsGet('hbr-ex-menu', EX_MENU_DEFAULT)
 
   await Promise.all([
     saveToFirestore(uid, 'rec',      rec),
@@ -58,5 +63,6 @@ export async function migrateFromLocalStorage(uid) {
     saveToFirestore(uid, 'shTodos',  shTodos),
     saveToFirestore(uid, 'weekly',   weekly),
     saveToFirestore(uid, 'shopping', shopping),
+    saveToFirestore(uid, 'exMenu',   exMenu),
   ])
 }

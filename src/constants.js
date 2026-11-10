@@ -30,6 +30,9 @@ export const SHIFTS = {
 // ── 気分 ──
 export const MOODS = ['😊 よい日', '🙂 まあまあ', '😐 ふつう', '😔 あまり…', '😞 つらい']
 
+// ── 運動メニュー（初期値） ──
+export const EX_MENU_DEFAULT = ['エアロバイク', 'ストレッチ', 'スクワット', '足上げ', 'ヒップスラスト', '足上げツイスト']
+
 // ── タブ定義 ──
 export const TABS = [
   { k: 'daily',    l: '日記',   i: '✦' },
