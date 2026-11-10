@@ -47,6 +47,7 @@ api/
 | `dekita`       | `hbr-dekita`       | `users/{uid}/data/dekita`    | object   |
 | `shTodos`      | `hbr-sh-todos`     | `users/{uid}/data/settings`  | array    |
 | `shopping`     | `hbr-shopping`     | `users/{uid}/data/settings`  | array    |
+| `exMenu`       | `hbr-ex-menu`      | `users/{uid}/data/settings`  | array    |
 | `weeklyReviews`| `hbr-weekly`       | `users/{uid}/data/weekly`    | array    |
 
 ## データ保存の仕組み
@@ -75,5 +76,6 @@ api/
 ## 注意事項
 
 - `goals`, `weekly` は Firestore に `{ items: [...] }` 形式で保存
-- `shTodos`, `shopping` は Firestore の `settings` ドキュメントに merge で保存
+- `shTodos`, `shopping`, `exMenu` は Firestore の `settings` ドキュメントに merge で保存
+- 運動は `rec[date].exList` (`[{ name, amount }]`) と `rec[date].exNote` (その他) で記録し、どちらかがあれば `exercise: true`
 - `rec`, `sh`, `dekita` は日付キーのオブジェクトとしてそのまま保存（`dekita[date]` は `[{ id, text, note }]`）
