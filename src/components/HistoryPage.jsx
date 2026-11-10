@@ -10,18 +10,21 @@ function formatWeekRange(start, end) {
 }
 
 export default function HistoryPage({ state, actions }) {
-  const { rec, sh, weeklyReviews = [], historySubTab = 'diary' } = state
+  const { rec, sh, dekita = {}, weeklyReviews = [], historySubTab = 'diary' } = state
   const { setDate, setTab, setMiniYm, updateRec, setHistorySubTab } = actions
   const [expandedNotes, setExpandedNotes] = useState(new Set())
   const [selectedTags, setSelectedTags]   = useState([])
   const [showOnlyFav, setShowOnlyFav]     = useState(false)
 
   // ── 日記タブ ──
-  const allDates = Object.keys(rec)
-    .filter(d => {
-      const r = rec[d]
-      return r && (r.notes?.length > 0 || (r.note && r.note.trim()))
-    })
+  const isFiltering = showOnlyFav || selectedTags.length > 0
+  const hasNotes = (d) => {
+    const r = rec[d]
+    return r && (r.notes?.length > 0 || (r.note && r.note.trim()))
+  }
+  const hasDekita = (d) => dekita[d]?.length > 0
+  const allDates = [...new Set([...Object.keys(rec), ...Object.keys(dekita)])]
+    .filter(d => hasNotes(d) || hasDekita(d))
     .sort()
     .reverse()
 
@@ -40,6 +43,7 @@ export default function HistoryPage({ state, actions }) {
 
   const filteredDates = allDates.filter(ds => {
     const notes = rec[ds]?.notes || []
+    if (!isFiltering) return true
     if (showOnlyFav && !notes.some(n => n.starred)) return false
     if (selectedTags.length > 0 && !notes.some(n => selectedTags.some(st => (n.tags || []).includes(st)))) return false
     return true
@@ -209,6 +213,21 @@ export default function HistoryPage({ state, actions }) {
                             </div>
                           )
                         })}
+                      </div>
+                    )}
+
+                    {/* できたこと */}
+                    {!isFiltering && hasDekita(ds) && (
+                      <div className="diary-note-card" style={{ cursor: 'default', marginTop: notes.length > 0 ? 6 : 0 }}>
+                        <div style={{ fontSize: 10, color: C.sage, letterSpacing: 1, marginBottom: 4 }}>✓ できたこと</div>
+                        {dekita[ds].map(item => (
+                          <div key={item.id} style={{ fontSize: 13, color: C.ink, lineHeight: 1.7 }}>
+                            <span style={{ color: C.sage, marginRight: 6 }}>✓</span>{item.text}
+                            {item.note && (
+                              <div style={{ fontSize: 12, color: C.inkM, paddingLeft: 18 }}>💡 {item.note}</div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
 
