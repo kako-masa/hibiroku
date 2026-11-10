@@ -27,7 +27,7 @@ src/
     GoalPage.jsx       # 目標管理
     HistoryPage.jsx    # 履歴閲覧・週次振り返り
     GraphPage.jsx      # データグラフ
-    LearningPage.jsx   # 学習記録
+    DekitaPage.jsx     # できたこと (日付ごとの「できたこと」+ 気づき)
     MiniCalendar.jsx   # 共通ミニカレンダー
     ReviewSection.jsx  # 振り返りセクション
     WeeklyReviewSection.jsx  # 週次振り返り
@@ -44,7 +44,7 @@ api/
 | `rec`          | `hbr-rec`          | `users/{uid}/data/rec`       | object   |
 | `sh`           | `hbr-sh`           | `users/{uid}/data/sh`        | object   |
 | `goals`        | `hbr-goals`        | `users/{uid}/data/goals`     | array    |
-| `learn`        | `hbr-learn`        | `users/{uid}/data/learn`     | array    |
+| `dekita`       | `hbr-dekita`       | `users/{uid}/data/dekita`    | object   |
 | `shTodos`      | `hbr-sh-todos`     | `users/{uid}/data/settings`  | array    |
 | `shopping`     | `hbr-shopping`     | `users/{uid}/data/settings`  | array    |
 | `weeklyReviews`| `hbr-weekly`       | `users/{uid}/data/weekly`    | array    |
@@ -74,6 +74,6 @@ api/
 
 ## 注意事項
 
-- `goals`, `learn`, `weekly` は Firestore に `{ items: [...] }` 形式で保存
+- `goals`, `weekly` は Firestore に `{ items: [...] }` 形式で保存
 - `shTodos`, `shopping` は Firestore の `settings` ドキュメントに merge で保存
-- `rec`, `sh` は日付キーのオブジェクトとしてそのまま保存
+- `rec`, `sh`, `dekita` は日付キーのオブジェクトとしてそのまま保存（`dekita[date]` は `[{ id, text, note }]`）

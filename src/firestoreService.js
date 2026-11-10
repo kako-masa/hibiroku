@@ -6,11 +6,11 @@ function dataDoc(uid, name) {
 }
 
 export async function loadAllData(uid) {
-  const [recSnap, shSnap, goalsSnap, learnSnap, settingsSnap, weeklySnap] = await Promise.all([
+  const [recSnap, shSnap, goalsSnap, dekitaSnap, settingsSnap, weeklySnap] = await Promise.all([
     getDoc(dataDoc(uid, 'rec')),
     getDoc(dataDoc(uid, 'sh')),
     getDoc(dataDoc(uid, 'goals')),
-    getDoc(dataDoc(uid, 'learn')),
+    getDoc(dataDoc(uid, 'dekita')),
     getDoc(dataDoc(uid, 'settings')),
     getDoc(dataDoc(uid, 'weekly')),
   ])
@@ -18,7 +18,7 @@ export async function loadAllData(uid) {
     rec:      recSnap.exists()      ? recSnap.data()                       : {},
     sh:       shSnap.exists()       ? shSnap.data()                        : {},
     goals:    goalsSnap.exists()    ? (goalsSnap.data().items ?? [])       : [],
-    learn:    learnSnap.exists()    ? (learnSnap.data().items ?? [])       : [],
+    dekita:   dekitaSnap.exists()   ? dekitaSnap.data()                    : {},
     shTodos:  settingsSnap.exists() ? (settingsSnap.data().shTodos   ?? []) : [],
     shopping: settingsSnap.exists() ? (settingsSnap.data().shopping  ?? []) : [],
     weekly:   weeklySnap.exists()   ? (weeklySnap.data().items ?? [])      : [],
@@ -26,14 +26,14 @@ export async function loadAllData(uid) {
 }
 
 export async function saveToFirestore(uid, key, value) {
-  if (key === 'goals' || key === 'learn' || key === 'weekly') {
+  if (key === 'goals' || key === 'weekly') {
     await setDoc(dataDoc(uid, key), { items: value })
   } else if (key === 'shTodos') {
     await setDoc(dataDoc(uid, 'settings'), { shTodos: value }, { merge: true })
   } else if (key === 'shopping') {
     await setDoc(dataDoc(uid, 'settings'), { shopping: value }, { merge: true })
   } else {
-    // rec / sh: valueはdateキーのオブジェクト
+    // rec / sh / dekita: valueはdateキーのオブジェクト
     await setDoc(dataDoc(uid, key), value)
   }
 }
@@ -45,7 +45,7 @@ export async function migrateFromLocalStorage(uid) {
   const rec      = lsGet('hbr-rec', {})
   const sh       = lsGet('hbr-sh', {})
   const goals    = lsGet('hbr-goals', [])
-  const learn    = lsGet('hbr-learn', [])
+  const dekita   = lsGet('hbr-dekita', {})
   const shTodos  = lsGet('hbr-sh-todos', [])
   const weekly   = lsGet('hbr-weekly', [])
   const shopping = lsGet('hbr-shopping', [])
@@ -54,7 +54,7 @@ export async function migrateFromLocalStorage(uid) {
     saveToFirestore(uid, 'rec',      rec),
     saveToFirestore(uid, 'sh',       sh),
     saveToFirestore(uid, 'goals',    goals),
-    saveToFirestore(uid, 'learn',    learn),
+    saveToFirestore(uid, 'dekita',   dekita),
     saveToFirestore(uid, 'shTodos',  shTodos),
     saveToFirestore(uid, 'weekly',   weekly),
     saveToFirestore(uid, 'shopping', shopping),

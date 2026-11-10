@@ -37,7 +37,7 @@ export const TABS = [
   { k: 'goal',     l: '目標',   i: '◎' },
   { k: 'history',  l: '履歴',   i: '◷' },
   { k: 'graph',    l: '記録',   i: '∿' },
-  { k: 'learning', l: '学び',   i: '◬' },
+  { k: 'dekita',   l: 'できたこと', i: '✓' },
 ]
 
 // ── 曜日 ──

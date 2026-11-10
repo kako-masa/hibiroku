@@ -6,7 +6,7 @@ import ShiftPage from './components/ShiftPage'
 import GoalPage from './components/GoalPage'
 import HistoryPage from './components/HistoryPage'
 import GraphPage from './components/GraphPage'
-import LearningPage from './components/LearningPage'
+import DekitaPage from './components/DekitaPage'
 import { auth, signInWithGoogle, signOutUser } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import { loadAllData, saveToFirestore, migrateFromLocalStorage } from './firestoreService'
@@ -29,7 +29,7 @@ export default function App() {
   const [rec, setRec] = useState(() => lsGet('hbr-rec', {}))
   const [sh, setSh] = useState(() => lsGet('hbr-sh', {}))
   const [goals, setGoals] = useState(() => lsGet('hbr-goals', []))
-  const [learn, setLearn] = useState(() => lsGet('hbr-learn', []))
+  const [dekita, setDekita] = useState(() => lsGet('hbr-dekita', {}))
   const [shTodos, setShTodos] = useState(() => lsGet('hbr-sh-todos', []))
   const [weeklyReviews, setWeeklyReviews] = useState(() => lsGet('hbr-weekly', []))
   const [shopping, setShopping] = useState(() => lsGet('hbr-shopping', []))
@@ -53,7 +53,7 @@ export default function App() {
           const hasData = (
             Object.keys(data.rec).length > 0 ||
             data.goals.length > 0 ||
-            data.learn.length > 0
+            Object.keys(data.dekita).length > 0
           )
           if (!hasData) {
             // Firestoreが空ならlocalStorageから移行
@@ -64,13 +64,13 @@ export default function App() {
               await migrateFromLocalStorage(u.uid)
               const d2 = await loadAllData(u.uid)
               setRec(d2.rec);     setSh(d2.sh);         setGoals(d2.goals)
-              setLearn(d2.learn); setShTodos(d2.shTodos); setWeeklyReviews(d2.weekly)
+              setDekita(d2.dekita); setShTodos(d2.shTodos); setWeeklyReviews(d2.weekly)
               setShopping(d2.shopping)
               setMigrated(true)
             }
           } else {
             setRec(data.rec);     setSh(data.sh);         setGoals(data.goals)
-            setLearn(data.learn); setShTodos(data.shTodos); setWeeklyReviews(data.weekly)
+            setDekita(data.dekita); setShTodos(data.shTodos); setWeeklyReviews(data.weekly)
             setShopping(data.shopping)
           }
           setSyncStatus('synced')
@@ -119,8 +119,8 @@ export default function App() {
     setGoals(v); lsSave('hbr-goals', v); fsSave('goals', v)
   }, [fsSave])
 
-  const updateLearn = useCallback((v) => {
-    setLearn(v); lsSave('hbr-learn', v); fsSave('learn', v)
+  const updateDekita = useCallback((v) => {
+    setDekita(v); lsSave('hbr-dekita', v); fsSave('dekita', v)
   }, [fsSave])
 
   const updateShTodos = useCallback((v) => {
@@ -135,10 +135,10 @@ export default function App() {
     setShopping(v); lsSave('hbr-shopping', v); fsSave('shopping', v)
   }, [fsSave])
 
-  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, learn, shTodos, weeklyReviews, shopping, historySubTab }
-  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateLearn, updateShTodos, updateWeeklyReviews, updateShopping, setHistorySubTab }
+  const state   = { tab, date, miniCalOpen, miniYm, rec, sh, goals, dekita, shTodos, weeklyReviews, shopping, historySubTab }
+  const actions = { setTab, setDate, setMiniCalOpen, setMiniYm, updateRec, updateSh, updateGoals, updateDekita, updateShTodos, updateWeeklyReviews, updateShopping, setHistorySubTab }
 
-  const pages = { shift: ShiftPage, goal: GoalPage, history: HistoryPage, graph: GraphPage, learning: LearningPage }
+  const pages = { shift: ShiftPage, goal: GoalPage, history: HistoryPage, graph: GraphPage, dekita: DekitaPage }
   const PageComponent = pages[tab]
 
   const now = new Date()

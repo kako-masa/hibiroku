@@ -32,14 +32,13 @@ function isHabitDone(task, rec, date) {
 }
 
 export default function DailyPage({ state, actions }) {
-  const { date, rec, sh, learn, miniYm, goals, weeklyReviews } = state
-  const { setDate, setMiniYm, updateRec, updateLearn, updateGoals, updateWeeklyReviews } = actions
+  const { date, rec, sh, miniYm, goals, weeklyReviews } = state
+  const { setDate, setMiniYm, updateRec, updateGoals, updateWeeklyReviews } = actions
   const [calOpen, setCalOpen] = useState(false)
   const [shiftOpen, setShiftOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiResult, setAiResult] = useState(null)
   const [aiError, setAiError] = useState(null)
-  const [aiSaved, setAiSaved] = useState(false)
   const [noteInput, setNoteInput] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editText, setEditText] = useState('')
@@ -85,7 +84,6 @@ export default function DailyPage({ state, actions }) {
     setMiniYm({ y: nd.getFullYear(), m: nd.getMonth() })
     setAiResult(null)
     setAiError(null)
-    setAiSaved(false)
     setNoteInput('')
   }
 
@@ -267,24 +265,6 @@ export default function DailyPage({ state, actions }) {
       setAiError(err.message || '通信エラーが発生しました。')
     }
     setAiLoading(false)
-  }
-
-  const saveToLearn = () => {
-    if (!aiResult) return
-    const items = [
-      ...(aiResult.workResources || []).map(r => ({
-        id: 'w' + Date.now() + Math.random(), ...r,
-        category: 'work', addedDate: date, read: false, memo: '',
-      })),
-      ...(aiResult.otherResources || []).map(r => ({
-        id: 'o' + Date.now() + Math.random(), ...r,
-        category: 'other', addedDate: date, read: false, memo: '',
-      })),
-    ]
-    const existing = new Set(learn.map(i => i.url || i.title))
-    const fresh = items.filter(i => !existing.has(i.url || i.title))
-    if (fresh.length) updateLearn([...learn, ...fresh])
-    setAiSaved(true)
   }
 
   return (
@@ -896,10 +876,6 @@ export default function DailyPage({ state, actions }) {
                   </div>
                 ) : null
               )}
-              <button className="save-res-btn" onClick={saveToLearn} disabled={aiSaved}>
-                {aiSaved ? '✓ 保存済み' : '学びタブに保存 →'}
-              </button>
-              {aiSaved && <div className="saved-msg">✓ 学びタブに保存しました</div>}
             </div>
           )}
           {aiError && (
